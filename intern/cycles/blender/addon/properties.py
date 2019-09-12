@@ -1125,7 +1125,7 @@ class CyclesObjectSettings(bpy.types.PropertyGroup):
     use_adaptive_subdivision: BoolProperty(
         name="Use Adaptive Subdivision",
         description="Use adaptive render time subdivision",
-        default=True,
+        default=False,
     )
 
     dicing_rate: FloatProperty(
