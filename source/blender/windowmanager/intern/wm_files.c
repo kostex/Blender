@@ -2726,7 +2726,7 @@ void WM_OT_save_mainfile(wmOperatorType *ot)
                                  FILE_BLENDER,
                                  FILE_SAVE,
                                  WM_FILESEL_FILEPATH,
-                                 FILE_LONGDISPLAY,
+                                 FILE_HORIZONTALDISPLAY,
                                  FILE_SORT_ALPHA);
   RNA_def_boolean(ot->srna, "compress", false, "Compress", "Write compressed .blend file");
   RNA_def_boolean(ot->srna,

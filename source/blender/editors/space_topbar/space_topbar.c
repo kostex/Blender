@@ -220,7 +220,7 @@ static void recent_files_menu_draw(const bContext *UNUSED(C), Menu *menu)
       const int icon = BLO_has_bfile_extension(file) ? ICON_FILE_BLEND : ICON_FILE_BACKUP;
       PointerRNA ptr;
       if (!BLI_exists(recent->filepath)){
-        char file_na[strlen(file) + 7];
+        char file_na[MAX_NAME];
         strcpy(file_na, file);
         strcat(file_na, " (N/A)");
         uiItemFullO(layout, "WM_OT_open_mainfile", file_na, icon, NULL, WM_OP_INVOKE_DEFAULT, 0, &ptr);
