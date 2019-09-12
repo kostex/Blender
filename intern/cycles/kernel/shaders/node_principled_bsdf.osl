@@ -18,7 +18,7 @@
 #include "node_fresnel.h"
 
 shader node_principled_bsdf(string distribution = "Multiscatter GGX",
-                            string subsurface_method = "burley",
+                            string subsurface_method = "random_walk",
                             color BaseColor = color(0.8, 0.8, 0.8),
                             float Subsurface = 0.0,
                             vector SubsurfaceRadius = vector(1.0, 1.0, 1.0),
@@ -26,7 +26,7 @@ shader node_principled_bsdf(string distribution = "Multiscatter GGX",
                             float Metallic = 0.0,
                             float Specular = 0.5,
                             float SpecularTint = 0.0,
-                            float Roughness = 0.5,
+                            float Roughness = 0.2,
                             float Anisotropic = 0.0,
                             float AnisotropicRotation = 0.0,
                             float Sheen = 0.0,

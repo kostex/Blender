@@ -190,7 +190,7 @@ class USERPREF_PT_interface_display(PreferencePanel, Panel):
 
 class USERPREF_PT_interface_text(PreferencePanel, Panel):
     bl_label = "Text Rendering"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -269,7 +269,7 @@ class USERPREF_PT_interface_menus(Panel):
     bl_space_type = 'PREFERENCES'
     bl_region_type = 'WINDOW'
     bl_label = "Menus"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -398,7 +398,7 @@ class USERPREF_PT_edit_cursor(PreferencePanel, Panel):
 
 class USERPREF_PT_edit_gpencil(PreferencePanel, Panel):
     bl_label = "Grease Pencil"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -435,7 +435,7 @@ class USERPREF_PT_edit_annotations(PreferencePanel, Panel):
 
 class USERPREF_PT_edit_weight_paint(PreferencePanel, Panel):
     bl_label = "Weight Paint"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -455,7 +455,7 @@ class USERPREF_PT_edit_weight_paint(PreferencePanel, Panel):
 
 class USERPREF_PT_edit_misc(PreferencePanel, Panel):
     bl_label = "Miscellaneous"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -681,7 +681,7 @@ class USERPREF_PT_viewport_textures(PreferencePanel, Panel):
 
 class USERPREF_PT_viewport_selection(PreferencePanel, Panel):
     bl_label = "Selection"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -784,7 +784,7 @@ class USERPREF_PT_theme_user_interface(PreferencePanel, Panel):
     bl_space_type = 'PREFERENCES'
     bl_region_type = 'WINDOW'
     bl_label = "User Interface"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -843,7 +843,7 @@ class PreferenceThemeWidgetColorPanel:
 
 class USERPREF_PT_theme_interface_state(PreferencePanel, Panel):
     bl_label = "State"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "USERPREF_PT_theme_user_interface"
 
     def draw_props(self, context, layout):
@@ -878,7 +878,7 @@ class USERPREF_PT_theme_interface_state(PreferencePanel, Panel):
 
 class USERPREF_PT_theme_interface_styles(PreferencePanel, Panel):
     bl_label = "Styles"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "USERPREF_PT_theme_user_interface"
 
     def draw_props(self, context, layout):
@@ -897,7 +897,7 @@ class USERPREF_PT_theme_interface_styles(PreferencePanel, Panel):
 
 class USERPREF_PT_theme_interface_gizmos(PreferencePanel, Panel):
     bl_label = "Axis & Gizmo Colors"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "USERPREF_PT_theme_user_interface"
 
     def draw_props(self, context, layout):
@@ -922,7 +922,7 @@ class USERPREF_PT_theme_interface_gizmos(PreferencePanel, Panel):
 
 class USERPREF_PT_theme_interface_icons(PreferencePanel, Panel):
     bl_label = "Icon Colors"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "USERPREF_PT_theme_user_interface"
 
     def draw_props(self, context, layout):
@@ -943,7 +943,7 @@ class USERPREF_PT_theme_interface_icons(PreferencePanel, Panel):
 
 class USERPREF_PT_theme_text_style(PreferencePanel, Panel):
     bl_label = "Text Style"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -992,7 +992,7 @@ class USERPREF_PT_theme_text_style(PreferencePanel, Panel):
 
 class USERPREF_PT_theme_bone_color_sets(PreferencePanel, Panel):
     bl_label = "Bone Color Sets"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -1525,7 +1525,7 @@ class USERPREF_PT_navigation_fly_walk(PreferencePanel, Panel):
 class USERPREF_PT_navigation_fly_walk_navigation(PreferencePanel, Panel):
     bl_label = "Walk"
     bl_parent_id = "USERPREF_PT_navigation_fly_walk"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -1551,7 +1551,7 @@ class USERPREF_PT_navigation_fly_walk_navigation(PreferencePanel, Panel):
 class USERPREF_PT_navigation_fly_walk_gravity(PreferencePanel, Panel):
     bl_label = "Gravity"
     bl_parent_id = "USERPREF_PT_navigation_fly_walk"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -1603,7 +1603,7 @@ class USERPREF_PT_input_tablet(PreferencePanel, Panel):
 
 class USERPREF_PT_input_ndof(PreferencePanel, Panel):
     bl_label = "NDOF"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
@@ -2029,7 +2029,7 @@ class USERPREF_PT_studiolight_light_editor(Panel):
     bl_parent_id = "USERPREF_PT_studiolight_lights"
     bl_space_type = 'PREFERENCES'
     bl_region_type = 'WINDOW'
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     def opengl_light_buttons(self, layout, light):
 

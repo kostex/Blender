@@ -48,6 +48,8 @@
 
 #include "ED_undo.h"
 
+#define KTX_WIDTH 0.25f
+
 /************************* Node Socket Manipulation **************************/
 
 /* describes an instance of a node type and a specific socket to link */
@@ -715,7 +717,7 @@ static void ui_node_draw_node(
 
   if (node->typeinfo->draw_buttons) {
     if (node->type != NODE_GROUP) {
-      split = uiLayoutSplit(layout, 0.5f, false);
+      split = uiLayoutSplit(layout, KTX_WIDTH, false);
       col = uiLayoutColumn(split, false);
       col = uiLayoutColumn(split, false);
 
@@ -765,7 +767,7 @@ static void ui_node_draw_input(
   BLI_snprintf(label + indent, UI_MAX_NAME_STR - indent, "%s", IFACE_(input->name));
 
   /* split in label and value */
-  split = uiLayoutSplit(layout, 0.5f, false);
+  split = uiLayoutSplit(layout, KTX_WIDTH, false);
 
   row = uiLayoutRow(split, true);
 

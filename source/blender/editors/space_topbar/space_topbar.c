@@ -219,10 +219,19 @@ static void recent_files_menu_draw(const bContext *UNUSED(C), Menu *menu)
       const char *file = BLI_path_basename(recent->filepath);
       const int icon = BLO_has_bfile_extension(file) ? ICON_FILE_BLEND : ICON_FILE_BACKUP;
       PointerRNA ptr;
-      uiItemFullO(layout, "WM_OT_open_mainfile", file, icon, NULL, WM_OP_INVOKE_DEFAULT, 0, &ptr);
+      if (!BLI_exists(recent->filepath)){
+        char file_na[strlen(file) + 7];
+        strcpy(file_na, file);
+        strcat(file_na, " (N/A)");
+        uiItemFullO(layout, "WM_OT_open_mainfile", file_na, icon, NULL, WM_OP_INVOKE_DEFAULT, 0, &ptr);
+      }
+      else {
+        uiItemFullO(layout, "WM_OT_open_mainfile", file, icon, NULL, WM_OP_INVOKE_DEFAULT, 0, &ptr);
+      }
       RNA_string_set(&ptr, "filepath", recent->filepath);
       RNA_boolean_set(&ptr, "display_file_selector", false);
     }
+    uiItemFullO(layout, "WM_OT_recent_cleanup", "Cleanup Recent", ICON_INFO, NULL, WM_OP_INVOKE_DEFAULT, 0, NULL);
   }
   else {
     uiItemL(layout, IFACE_("No Recent Files"), ICON_NONE);

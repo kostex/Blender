@@ -39,7 +39,7 @@ static bNodeSocketTemplate sh_node_bsdf_principled_in[] = {
     {SOCK_FLOAT, 1, N_("Metallic"), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, PROP_FACTOR},
     {SOCK_FLOAT, 1, N_("Specular"), 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, PROP_FACTOR},
     {SOCK_FLOAT, 1, N_("Specular Tint"), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, PROP_FACTOR},
-    {SOCK_FLOAT, 1, N_("Roughness"), 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, PROP_FACTOR},
+    {SOCK_FLOAT, 1, N_("Roughness"), 0.2f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, PROP_FACTOR},
     {SOCK_FLOAT, 1, N_("Anisotropic"), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, PROP_FACTOR},
     {SOCK_FLOAT, 1, N_("Anisotropic Rotation"), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, PROP_FACTOR},
     {SOCK_FLOAT, 1, N_("Sheen"), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, PROP_FACTOR},
@@ -95,7 +95,7 @@ static bNodeSocketTemplate sh_node_bsdf_principled_out[] = {
 static void node_shader_init_principled(bNodeTree *UNUSED(ntree), bNode *node)
 {
   node->custom1 = SHD_GLOSSY_GGX;
-  node->custom2 = SHD_SUBSURFACE_BURLEY;
+  node->custom2 = SHD_SUBSURFACE_RANDOM_WALK;
 }
 
 #define socket_not_zero(sock) (in[sock].link || (clamp_f(in[sock].vec[0], 0.0f, 1.0f) > 1e-5f))

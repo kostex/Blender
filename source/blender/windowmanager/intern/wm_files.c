@@ -699,17 +699,6 @@ bool WM_file_read(bContext *C, const char *filepath, ReportList *reports)
     BLI_assert(!"invalid 'retval'");
   }
 
-  if (success == false) {
-    /* remove from recent files list */
-    if (do_history) {
-      RecentFile *recent = wm_file_history_find(filepath);
-      if (recent) {
-        wm_history_file_free(recent);
-        wm_history_file_write();
-      }
-    }
-  }
-
   WM_cursor_wait(0);
 
   return success;
@@ -2350,8 +2339,8 @@ void WM_OT_open_mainfile(wmOperatorType *ot)
                                  FILE_BLENDER,
                                  FILE_OPENFILE,
                                  WM_FILESEL_FILEPATH,
-                                 FILE_DEFAULTDISPLAY,
-                                 FILE_SORT_ALPHA);
+                                 FILE_IMGDISPLAY,
+                                 FILE_SORT_TIME);
 
   RNA_def_boolean(
       ot->srna, "load_ui", true, "Load UI", "Load user interface setup in the .blend file");
@@ -2665,8 +2654,8 @@ void WM_OT_save_as_mainfile(wmOperatorType *ot)
                                  FILE_BLENDER,
                                  FILE_SAVE,
                                  WM_FILESEL_FILEPATH,
-                                 FILE_DEFAULTDISPLAY,
-                                 FILE_SORT_ALPHA);
+                                 FILE_IMGDISPLAY,
+                                 FILE_SORT_TIME);
   RNA_def_boolean(ot->srna, "compress", false, "Compress", "Write compressed .blend file");
   RNA_def_boolean(ot->srna,
                   "relative_remap",
@@ -2737,7 +2726,7 @@ void WM_OT_save_mainfile(wmOperatorType *ot)
                                  FILE_BLENDER,
                                  FILE_SAVE,
                                  WM_FILESEL_FILEPATH,
-                                 FILE_DEFAULTDISPLAY,
+                                 FILE_LONGDISPLAY,
                                  FILE_SORT_ALPHA);
   RNA_def_boolean(ot->srna, "compress", false, "Compress", "Write compressed .blend file");
   RNA_def_boolean(ot->srna,

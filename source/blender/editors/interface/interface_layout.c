@@ -75,7 +75,7 @@
   } \
   (void)0
 
-#define UI_ITEM_PROP_SEP_DIVIDE 0.5f
+#define UI_ITEM_PROP_SEP_DIVIDE 0.3f
 
 /* uiLayoutRoot */
 

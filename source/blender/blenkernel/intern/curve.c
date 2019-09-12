@@ -158,11 +158,13 @@ void BKE_curve_init(Curve *cu, const short curve_type)
 
   if (cu->type == OB_FONT) {
     cu->flag |= CU_FRONT | CU_BACK;
+    cu->spacemode = CU_ALIGN_X_MIDDLE;
+    cu->align_y = CU_ALIGN_Y_CENTER;
     cu->vfont = cu->vfontb = cu->vfonti = cu->vfontbi = BKE_vfont_builtin_get();
-    cu->vfont->id.us += 4;
+    cu->vfont->id.us += 6;
     cu->str = MEM_malloc_arrayN(12, sizeof(unsigned char), "str");
-    BLI_strncpy(cu->str, "Text", 12);
-    cu->len = cu->len_wchar = cu->pos = 4;
+    BLI_strncpy(cu->str, "kostex", 12);
+    cu->len = cu->len_wchar = cu->pos = 6;
     cu->strinfo = MEM_calloc_arrayN(12, sizeof(CharInfo), "strinfo new");
     cu->totbox = cu->actbox = 1;
     cu->tb = MEM_calloc_arrayN(MAXTEXTBOX, sizeof(TextBox), "textbox");

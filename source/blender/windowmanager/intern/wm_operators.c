@@ -57,6 +57,7 @@
 #include "BLI_math.h"
 #include "BLI_utildefines.h"
 
+#include "BKE_appdir.h"
 #include "BKE_brush.h"
 #include "BKE_context.h"
 #include "BKE_global.h"
@@ -1767,11 +1768,45 @@ static void WM_OT_quit_blender(wmOperatorType *ot)
   ot->exec = wm_exit_blender_exec;
 }
 
-/** \} */
+static int wm_recent_cleanup_exec(bContext *UNUSED(C), wmOperator *UNUSED(op))
+{
+  const char *user_config_dir;
+  char name[FILE_MAX];
+  FILE *fp;
 
-/* -------------------------------------------------------------------- */
-/** \name Console Toggle Operator (WIN32 only)
- * \{ */
+  /* will be NULL in background mode */
+  user_config_dir = BKE_appdir_folder_id_create(BLENDER_USER_CONFIG, NULL);
+  if (!user_config_dir) {
+    return OPERATOR_CANCELLED;
+  }
+  BLI_make_file_string("/", name, user_config_dir, BLENDER_HISTORY_FILE);
+  fp = BLI_fopen(name, "w");
+  if (fp) {
+    struct RecentFile *recent;
+    for (recent = G.recent_files.first; recent; recent = recent->next) {
+      if(BLI_exists(recent->filepath)){
+        fprintf(fp, "%s\n", recent->filepath);
+      }
+      else {
+        MEM_freeN(recent->filepath);
+        BLI_freelinkN(&G.recent_files, recent);
+      }
+    }
+    fclose(fp);
+  }
+  return OPERATOR_FINISHED;
+}
+
+static void WM_OT_recent_cleanup(wmOperatorType *ot)
+{
+  ot->name = "Cleanup Recent Files";
+  ot->idname = "WM_OT_recent_cleanup";
+  ot->description = "Remove all invalid Recent Files";
+
+  ot->exec = wm_recent_cleanup_exec;
+}
+
+/* *********************** */
 
 #if defined(WIN32)
 
@@ -3366,6 +3401,7 @@ void wm_operatortypes_register(void)
   WM_operatortype_append(WM_OT_call_panel);
   WM_operatortype_append(WM_OT_radial_control);
   WM_operatortype_append(WM_OT_stereo3d_set);
+  WM_operatortype_append(WM_OT_recent_cleanup);
 #if defined(WIN32)
   WM_operatortype_append(WM_OT_console_toggle);
 #endif

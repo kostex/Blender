@@ -1145,6 +1145,14 @@ class VIEW3D_PT_sculpt_dyntopo(Panel, View3DPaintPanel):
     def draw_header(self, context):
         is_popover = self.is_popover
         layout = self.layout
+        tool_settings = context.tool_settings
+        sculpt = tool_settings.sculpt
+        if sculpt.detail_type_method in {'CONSTANT', 'MANUAL'}:
+            layout.prop(sculpt, "constant_detail_resolution", slider=True)
+        elif (sculpt.detail_type_method == 'BRUSH'):
+            layout.prop(sculpt, "detail_percent", slider=True)
+        else:
+            layout.prop(sculpt, "detail_size", slider=True)
         layout.operator(
             "sculpt.dynamic_topology_toggle",
             icon='CHECKBOX_HLT' if context.sculpt_object.use_dynamic_topology_sculpting else 'CHECKBOX_DEHLT',

@@ -6642,8 +6642,15 @@ class VIEW3D_PT_sculpt_context_menu(Panel):
     def draw(self, context):
         layout = self.layout
 
-        brush = context.tool_settings.sculpt.brush
+        sculpt = context.tool_settings.sculpt
+        brush = sculpt.brush
         capabilities = brush.sculpt_capabilities
+        if sculpt.detail_type_method in {'CONSTANT', 'MANUAL'}:
+            layout.prop(sculpt, "constant_detail_resolution", slider=True)
+        elif (sculpt.detail_type_method == 'BRUSH'):
+            layout.prop(sculpt, "detail_percent", slider=True)
+        else:
+            layout.prop(sculpt, "detail_size", slider=True)
 
         UnifiedPaintPanel.prop_unified_size(layout, context, brush, "size", slider=True)
         UnifiedPaintPanel.prop_unified_strength(layout, context, brush, "strength")
