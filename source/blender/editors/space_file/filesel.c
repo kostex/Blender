@@ -281,7 +281,7 @@ short ED_fileselect_set_params(SpaceFile *sfile)
     if (params->display == FILE_DEFAULTDISPLAY) {
       if (params->display_previous == FILE_DEFAULTDISPLAY) {
         if (U.uiflag & USER_SHOW_THUMBNAILS) {
-          if (params->filter & (FILE_TYPE_IMAGE | FILE_TYPE_MOVIE | FILE_TYPE_FTFONT)) {
+          if (params->filter & (FILE_TYPE_IMAGE | FILE_TYPE_MOVIE | FILE_TYPE_FTFONT | FILE_TYPE_BLENDER)) {
             params->display = FILE_IMGDISPLAY;
           }
           else {

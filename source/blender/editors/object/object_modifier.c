@@ -1541,7 +1541,7 @@ void OBJECT_OT_multires_external_save(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_BTX,
                                  FILE_SPECIAL,
                                  FILE_SAVE,
-                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
   edit_modifier_properties(ot);

@@ -513,7 +513,7 @@ void FILE_OT_find_missing_files(wmOperatorType *ot)
                                  0,
                                  FILE_SPECIAL,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_DIRECTORY,
+                                 WM_FILESEL_DIRECTORY | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
 }

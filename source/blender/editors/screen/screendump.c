@@ -246,7 +246,7 @@ void SCREEN_OT_screenshot(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_IMAGE,
                                  FILE_SPECIAL,
                                  FILE_SAVE,
-                                 WM_FILESEL_FILEPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
   RNA_def_boolean(ot->srna,

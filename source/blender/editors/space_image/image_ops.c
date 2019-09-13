@@ -1513,7 +1513,7 @@ void IMAGE_OT_open(wmOperatorType *ot)
                                  FILE_SPECIAL,
                                  FILE_OPENFILE,
                                  WM_FILESEL_FILEPATH | WM_FILESEL_DIRECTORY | WM_FILESEL_FILES |
-                                     WM_FILESEL_RELPATH,
+                                     WM_FILESEL_RELPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
 
@@ -1651,7 +1651,7 @@ void IMAGE_OT_replace(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_IMAGE | FILE_TYPE_MOVIE,
                                  FILE_SPECIAL,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
 }
@@ -2021,7 +2021,7 @@ void IMAGE_OT_save_as(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_IMAGE | FILE_TYPE_MOVIE,
                                  FILE_SPECIAL,
                                  FILE_SAVE,
-                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
 }

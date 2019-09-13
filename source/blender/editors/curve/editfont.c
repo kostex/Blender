@@ -627,7 +627,7 @@ void FONT_OT_text_paste_from_file(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_TEXT,
                                  FILE_SPECIAL,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
 }
@@ -2150,7 +2150,7 @@ void FONT_OT_open(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_FTFONT,
                                  FILE_SPECIAL,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
 }

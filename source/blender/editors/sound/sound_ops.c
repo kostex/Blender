@@ -168,7 +168,7 @@ static void SOUND_OT_open(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_SOUND | FILE_TYPE_MOVIE,
                                  FILE_SPECIAL,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
   RNA_def_boolean(ot->srna, "cache", false, "Cache", "Cache the sound in memory");
@@ -195,7 +195,7 @@ static void SOUND_OT_open_mono(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_SOUND | FILE_TYPE_MOVIE,
                                  FILE_SPECIAL,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
   RNA_def_boolean(ot->srna, "cache", false, "Cache", "Cache the sound in memory");

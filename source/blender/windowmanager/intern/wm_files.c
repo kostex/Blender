@@ -2338,7 +2338,7 @@ void WM_OT_open_mainfile(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_BLENDER,
                                  FILE_BLENDER,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_IMGDISPLAY,
                                  FILE_SORT_TIME);
 
@@ -2505,7 +2505,7 @@ void WM_OT_recover_auto_save(wmOperatorType *ot)
                                  FILE_TYPE_BLENDER,
                                  FILE_BLENDER,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_HORIZONTALDISPLAY,
                                  FILE_SORT_TIME);
 }
@@ -2653,8 +2653,8 @@ void WM_OT_save_as_mainfile(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_BLENDER,
                                  FILE_BLENDER,
                                  FILE_SAVE,
-                                 WM_FILESEL_FILEPATH,
-                                 FILE_IMGDISPLAY,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_SHOW_PROPS,
+                                 FILE_HORIZONTALDISPLAY,
                                  FILE_SORT_TIME);
   RNA_def_boolean(ot->srna, "compress", false, "Compress", "Write compressed .blend file");
   RNA_def_boolean(ot->srna,
@@ -2725,13 +2725,13 @@ void WM_OT_save_mainfile(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_BLENDER,
                                  FILE_BLENDER,
                                  FILE_SAVE,
-                                 WM_FILESEL_FILEPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_HORIZONTALDISPLAY,
-                                 FILE_SORT_ALPHA);
+                                 FILE_SORT_TIME);
   RNA_def_boolean(ot->srna, "compress", false, "Compress", "Write compressed .blend file");
   RNA_def_boolean(ot->srna,
                   "relative_remap",
-                  false,
+                  USER_RELPATHS,
                   "Remap Relative",
                   "Make paths relative when saving to a different directory");
 

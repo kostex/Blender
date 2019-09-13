@@ -321,7 +321,7 @@ void CLIP_OT_open(wmOperatorType *ot)
                                  FILE_TYPE_FOLDER | FILE_TYPE_IMAGE | FILE_TYPE_MOVIE,
                                  FILE_SPECIAL,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_RELPATH | WM_FILESEL_FILES | WM_FILESEL_DIRECTORY,
+                                 WM_FILESEL_RELPATH | WM_FILESEL_FILES | WM_FILESEL_DIRECTORY | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
 }

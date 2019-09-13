@@ -262,7 +262,7 @@ void BUTTONS_OT_file_browse(wmOperatorType *ot)
                                  0,
                                  FILE_SPECIAL,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH,
+                                 WM_FILESEL_FILEPATH | WM_FILESEL_RELPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
 }
@@ -289,7 +289,7 @@ void BUTTONS_OT_directory_browse(wmOperatorType *ot)
                                  0,
                                  FILE_SPECIAL,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_DIRECTORY | WM_FILESEL_RELPATH,
+                                 WM_FILESEL_DIRECTORY | WM_FILESEL_RELPATH | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_ALPHA);
 }
