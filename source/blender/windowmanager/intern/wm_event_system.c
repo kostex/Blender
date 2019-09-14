@@ -2343,8 +2343,8 @@ static int wm_handler_fileselect_do(bContext *C,
   switch (val) {
     case EVT_FILESELECT_FULL_OPEN: {
       wmWindow *win = CTX_wm_window(C);
-      const int sizex = 1020 * UI_DPI_FAC;
-      const int sizey = 600 * UI_DPI_FAC;
+      const int sizex = WM_window_pixels_x(win) - 150;
+      const int sizey = WM_window_pixels_y(win) - 200;
 
       if (WM_window_open_temp(C,
                               WM_window_pixels_x(win) / 2,
