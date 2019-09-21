@@ -2503,7 +2503,7 @@ void WM_OT_recover_auto_save(wmOperatorType *ot)
                                  FILE_TYPE_BLENDER,
                                  FILE_BLENDER,
                                  FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH | WM_FILESEL_SHOW_PROPS,
+                                 WM_FILESEL_FILEPATH,
                                  FILE_HORIZONTALDISPLAY,
                                  FILE_SORT_TIME);
 }

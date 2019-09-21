@@ -41,20 +41,18 @@
 #include "BKE_layer.h"
 #include "BKE_library.h"
 #include "BKE_main.h"
-#include "BKE_node.h"
 #include "BKE_screen.h"
 #include "BKE_scene.h"
+#include "BKE_sound.h"
 #include "BKE_workspace.h"
 
 #include "WM_api.h"
 #include "WM_types.h"
 
-#include "ED_object.h"
 #include "ED_screen.h"
 #include "ED_screen_types.h"
 #include "ED_clip.h"
 #include "ED_node.h"
-#include "ED_render.h"
 
 #include "UI_interface.h"
 
@@ -518,6 +516,17 @@ void ED_screen_ensure_updated(wmWindowManager *wm, wmWindow *win, bScreen *scree
   }
 }
 
+/**
+ * Utility to exit and free an area-region. Screen level regions (menus/popups) need to be treated
+ * slightly differently, see #ui_region_temp_remove().
+ */
+void ED_region_remove(bContext *C, ScrArea *sa, ARegion *ar)
+{
+  ED_region_exit(C, ar);
+  BKE_area_region_free(sa->type, ar);
+  BLI_freelinkN(&sa->regionbase, ar);
+}
+
 /* *********** exit calls are for closing running stuff ******** */
 
 void ED_region_exit(bContext *C, ARegion *ar)
@@ -583,6 +592,11 @@ void ED_screen_exit(bContext *C, wmWindow *window, bScreen *screen)
 
   if (screen->animtimer) {
     WM_event_remove_timer(wm, window, screen->animtimer);
+
+    Depsgraph *depsgraph = CTX_data_depsgraph_pointer(C);
+    Scene *scene = WM_window_get_active_scene(prevwin);
+    Scene *scene_eval = (Scene *)DEG_get_evaluated_id(depsgraph, &scene->id);
+    BKE_sound_stop_scene(scene_eval);
   }
   screen->animtimer = NULL;
   screen->scrubbing = false;
