@@ -2684,7 +2684,7 @@ static int wm_save_mainfile_invoke(bContext *C, wmOperator *op, const wmEvent *U
   /* if we're saving for the first time and prefer relative paths -
    * any existing paths will be absolute,
    * enable the option to remap paths to avoid confusion T37240. */
-  if ((G.relbase_valid == false) && (U.flag & USER_RELPATHS)) {
+  if ((G.relbase_valid == false) && (U.flag & false)) {
     PropertyRNA *prop = RNA_struct_find_property(op->ptr, "relative_remap");
     if (!RNA_property_is_set(op->ptr, prop)) {
       RNA_property_boolean_set(op->ptr, prop, true);
@@ -2729,7 +2729,7 @@ void WM_OT_save_mainfile(wmOperatorType *ot)
   RNA_def_boolean(ot->srna, "compress", false, "Compress", "Write compressed .blend file");
   RNA_def_boolean(ot->srna,
                   "relative_remap",
-                  USER_RELPATHS,
+                  false,
                   "Remap Relative",
                   "Make paths relative when saving to a different directory");
 
