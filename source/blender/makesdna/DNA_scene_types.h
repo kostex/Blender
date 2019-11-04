@@ -975,6 +975,7 @@ typedef struct Sculpt {
   char _pad[4];
 
   struct Object *gravity_object;
+  struct Tex *filter_texture;
 } Sculpt;
 
 typedef struct UvSculpt {

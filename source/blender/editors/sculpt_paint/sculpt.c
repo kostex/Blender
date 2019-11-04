@@ -62,6 +62,7 @@
 #include "BKE_pbvh.h"
 #include "BKE_pointcache.h"
 #include "BKE_report.h"
+#include "BKE_texture.h"
 #include "BKE_scene.h"
 #include "BKE_screen.h"
 #include "BKE_subdiv_ccg.h"
@@ -8270,6 +8271,12 @@ static void mesh_filter_task_cb(void *__restrict userdata,
     fade = 1 - fade;
     fade *= data->filter_strength;
 
+    if (data->filter_texture) {
+      float rgba[4];
+      fade *= BKE_brush_filter_sample_tex_3d(
+          data->filter_texture, orig_data.co, rgba, 0, ss->tex_pool);
+    }
+
     if (fade == 0.0f) {
       continue;
     }
@@ -8392,6 +8399,21 @@ static int sculpt_mesh_filter_modal(bContext *C, wmOperator *op, const wmEvent *
       .filter_strength = filter_strength,
   };
 
+  if (sd->filter_texture) {
+    MTex filter_mtex = {0};
+    BKE_texture_mtex_default(&filter_mtex);
+    copy_v3_fl(filter_mtex.size, RNA_float_get(op->ptr, "texture_size"));
+    filter_mtex.tex = sd->filter_texture;
+    filter_mtex.mapping = MTEX_CUBE;
+    data.filter_texture = &filter_mtex;
+    if (!ss->tex_pool) {
+      ss->tex_pool = BKE_image_pool_new();
+    }
+  }
+  else {
+    data.filter_texture = NULL;
+  }
+
   PBVHParallelSettings settings;
   BKE_pbvh_parallel_range_settings(
       &settings, (sd->flags & SCULPT_USE_OPENMP), ss->filter_cache->totnode);
@@ -8464,6 +8486,15 @@ static void SCULPT_OT_mesh_filter(struct wmOperatorType *ot)
                "Operation that is going to be applied to the mesh");
   RNA_def_float(
       ot->srna, "strength", 1.0f, -10.0f, 10.0f, "Strength", "Filter Strength", -10.0f, 10.0f);
+  RNA_def_float(ot->srna,
+                "texture_size",
+                1.0f,
+                -100.0f,
+                100.0f,
+                "Texture Size",
+                "Scale of the filter texture",
+                -10.0f,
+                10.0f);
   RNA_def_enum_flag(ot->srna,
                     "deform_axis",
                     prop_mesh_filter_deform_axis_items,

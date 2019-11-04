@@ -6431,6 +6431,8 @@ static void lib_link_scene(FileData *fd, Main *main)
       if (sce->toolsettings->sculpt) {
         sce->toolsettings->sculpt->gravity_object = newlibadr(
             fd, sce->id.lib, sce->toolsettings->sculpt->gravity_object);
+        sce->toolsettings->sculpt->filter_texture = newlibadr(
+            fd, sce->id.lib, sce->toolsettings->sculpt->filter_texture);
       }
 
       if (sce->toolsettings->imapaint.stencil) {

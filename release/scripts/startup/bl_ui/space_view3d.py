@@ -2905,6 +2905,10 @@ class VIEW3D_MT_mask(Menu):
         layout.separator()
 
         props = layout.operator("mesh.paint_mask_extract", text="Mask Extract")
+        props = layout.operator("mesh.paint_mask_slice", text="Mask Slice")
+        props.slice_new_object = False
+        props = layout.operator("mesh.paint_mask_slice", text="Mask Slice to New Object")
+        props.slice_new_object = True
 
         layout.separator()
 
