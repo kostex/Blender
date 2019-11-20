@@ -59,7 +59,6 @@ class FILEBROWSER_PT_display(Panel):
 
         layout.label(text="Display as")
         layout.column().prop(params, "display_type", expand=True)
-
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
 
@@ -373,7 +372,9 @@ class FILEBROWSER_PT_directory_path(Panel):
         subsubrow = subrow.row()
         subsubrow.operator_context = 'EXEC_DEFAULT'
         subsubrow.operator("file.directory_new", icon='NEWFOLDER', text="")
-
+        subsubrow.prop(context.space_data.params,"display_type",expand=True,text="")
+        subsubrow.prop(context.space_data.params,"sort_method",expand=True,text="")
+        subsubrow.prop(context.space_data.params, "use_sort_invert",text="RSort")
         subrow.template_file_select_path(params)
 
         subrow = flow.row()
