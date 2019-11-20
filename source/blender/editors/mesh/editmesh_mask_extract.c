@@ -340,7 +340,7 @@ static int paint_mask_slice_exec(bContext *C, wmOperator *op)
   Mesh *new_mesh = BKE_mesh_copy(bmain, mesh);
 
   if (ob->mode == OB_MODE_SCULPT) {
-    ED_sculpt_undo_geometry_begin(ob, "Mask Extract");
+    ED_sculpt_undo_geometry_begin(ob, "Mask Slice");
   }
 
   BMesh *bm;
