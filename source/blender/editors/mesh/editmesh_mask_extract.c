@@ -340,7 +340,7 @@ static int paint_mask_slice_exec(bContext *C, wmOperator *op)
   Mesh *new_mesh = BKE_mesh_copy(bmain, mesh);
 
   if (ob->mode == OB_MODE_SCULPT) {
-    ED_sculpt_undo_geometry_begin(ob, "Mask Slice");
+    ED_sculpt_undo_geometry_begin(ob, "mask slice");
   }
 
   BMesh *bm;
@@ -366,7 +366,7 @@ static int paint_mask_slice_exec(bContext *C, wmOperator *op)
                                         mesh);
   BM_mesh_free(bm);
 
-  if (RNA_boolean_get(op->ptr, "slice_new_object")) {
+  if (RNA_boolean_get(op->ptr, "new_object")) {
     ushort local_view_bits = 0;
     if (v3d && v3d->localvd) {
       local_view_bits = v3d->local_view_uuid;
@@ -424,6 +424,7 @@ static int paint_mask_slice_exec(bContext *C, wmOperator *op)
 
 void MESH_OT_paint_mask_slice(wmOperatorType *ot)
 {
+  PropertyRNA *prop;
   /* identifiers */
   ot->name = "Mask Slice";
   ot->description = "Slices the paint mask from the mesh";
@@ -445,10 +446,13 @@ void MESH_OT_paint_mask_slice(wmOperatorType *ot)
       "Minimum mask value to consider the vertex valid to extract a face from the original mesh",
       0.0f,
       1.0f);
-  RNA_def_boolean(ot->srna, "fill_holes", true, "Fill Holes", "Fill holes after slicing the mask");
-  RNA_def_boolean(ot->srna,
-                  "slice_new_object",
-                  true,
-                  "Slice to New Object",
-                  "Create a new object from the sliced mask");
+  prop = RNA_def_boolean(
+      ot->srna, "fill_holes", true, "Fill Holes", "Fill holes after slicing the mask");
+  RNA_def_property_flag(prop, PROP_SKIP_SAVE);
+  prop = RNA_def_boolean(ot->srna,
+                         "new_object",
+                         true,
+                         "Slice to New Object",
+                         "Create a new object from the sliced mask");
+  RNA_def_property_flag(prop, PROP_SKIP_SAVE);
 }
