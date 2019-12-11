@@ -4266,7 +4266,31 @@ void blo_do_versions_280(FileData *fd, Library *UNUSED(lib), Main *bmain)
     }
   }
 
+  /**
+   * Versioning code until next subversion bump goes here.
+   *
+   * \note Be sure to check when bumping the version:
+   * - "versioning_userdef.c", #BLO_version_defaults_userpref_blend
+   * - "versioning_userdef.c", #do_versions_theme
+   *
+   * \note Keep this message at the bottom of the function.
+   */
   {
-    /* Versioning code until next subversion bump goes here. */
+    /* Keep this block, even when empty. */
+
+    /* Cloth internal springs */
+    for (Object *ob = bmain->objects.first; ob; ob = ob->id.next) {
+      for (ModifierData *md = ob->modifiers.first; md; md = md->next) {
+        if (md->type == eModifierType_Cloth) {
+          ClothModifierData *clmd = (ClothModifierData *)md;
+
+          clmd->sim_parms->internal_tension = 15.0f;
+          clmd->sim_parms->max_internal_tension = 15.0f;
+          clmd->sim_parms->internal_compression = 15.0f;
+          clmd->sim_parms->max_internal_compression = 15.0f;
+          clmd->sim_parms->internal_spring_max_diversion = M_PI / 4.0f;
+        }
+      }
+    }
   }
 }
