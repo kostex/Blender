@@ -1213,7 +1213,12 @@ class ThemeGenericClassGenerator():
                             "datapath": new_datapath,
                         })
 
-                        yield from generate_child_panel_classes_recurse(panel_id, prop.fixed_type, theme_area, new_datapath)
+                        yield from generate_child_panel_classes_recurse(
+                            panel_id,
+                            prop.fixed_type,
+                            theme_area,
+                            new_datapath,
+                        )
 
         yield from generate_child_panel_classes_recurse(parent_id, rna_type, theme_area, datapath)
 
@@ -2190,7 +2195,6 @@ class USERPREF_PT_experimental_ui(ExperimentalPanel, Panel):
         col = split.column()
         col.operator("wm.url_open", text=task, icon='URL').url = self.url_prefix + task
 
-
 """
 # Example panel, leave it here so we always have a template to follow even
 # after the features are gone from the experimental panel.
@@ -2220,6 +2224,11 @@ class USERPREF_PT_experimental_virtual_reality(ExperimentalPanel, Panel):
 
 class USERPREF_PT_experimental_usd(ExperimentalPanel, Panel):
     bl_label = "Universal Scene Description"
+
+    @classmethod
+    def poll(cls, context):
+        # Only show the panel if Blender was actually built with USD support.
+        return getattr(bpy.app.build_options, 'usd', False)
 
     def draw_props(self, context, layout):
         prefs = context.preferences
