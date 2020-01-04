@@ -1128,7 +1128,7 @@ static void tree_overlap_traverse(BVHOverlapData_Thread *data_thread,
       }
     }
     else {
-      for (j = 0; j < data->tree2->tree_type; j++) {
+      for (j = 0; j < data->tree1->tree_type; j++) {
         if (node1->children[j]) {
           tree_overlap_traverse(data_thread, node1->children[j], node2);
         }
@@ -1175,7 +1175,7 @@ static void tree_overlap_traverse_cb(BVHOverlapData_Thread *data_thread,
       }
     }
     else {
-      for (j = 0; j < data->tree2->tree_type; j++) {
+      for (j = 0; j < data->tree1->tree_type; j++) {
         if (node1->children[j]) {
           tree_overlap_traverse_cb(data_thread, node1->children[j], node2);
         }
@@ -1288,13 +1288,15 @@ BVHTreeOverlap *BLI_bvhtree_overlap_ex(
     const uint max_interactions,
     const int flag)
 {
-  bool use_threading = (flag & BVH_OVERLAP_USE_THREADING) != 0;
   bool overlap_pairs = (flag & BVH_OVERLAP_RETURN_PAIRS) != 0;
+  bool use_threading = (flag & BVH_OVERLAP_USE_THREADING) != 0 &&
+                       (tree1->totleaf > KDOPBVH_THREAD_LEAF_THRESHOLD);
 
   /* `RETURN_PAIRS` was not implemented without `max_interations`. */
   BLI_assert(overlap_pairs || max_interactions);
 
-  const int thread_num = BLI_bvhtree_overlap_thread_num(tree1);
+  const int root_node_len = BLI_bvhtree_overlap_thread_num(tree1);
+  const int thread_num = use_threading ? root_node_len : 1;
   int j;
   size_t total = 0;
   BVHTreeOverlap *overlap = NULL, *to = NULL;
@@ -1309,12 +1311,14 @@ BVHTreeOverlap *BLI_bvhtree_overlap_ex(
     return NULL;
   }
 
+  const BVHNode *root1 = tree1->nodes[tree1->totleaf];
+  const BVHNode *root2 = tree2->nodes[tree2->totleaf];
+
   start_axis = min_axis(tree1->start_axis, tree2->start_axis);
   stop_axis = min_axis(tree1->stop_axis, tree2->stop_axis);
 
   /* fast check root nodes for collision before doing big splitting + traversal */
-  if (!tree_overlap_test(
-          tree1->nodes[tree1->totleaf], tree2->nodes[tree2->totleaf], start_axis, stop_axis)) {
+  if (!tree_overlap_test(root1, root2, start_axis, stop_axis)) {
     return NULL;
   }
 
@@ -1337,14 +1341,28 @@ BVHTreeOverlap *BLI_bvhtree_overlap_ex(
     data[j].thread = j;
   }
 
-  TaskParallelSettings settings;
-  BLI_parallel_range_settings_defaults(&settings);
-  settings.use_threading = use_threading && (tree1->totleaf > KDOPBVH_THREAD_LEAF_THRESHOLD);
-  BLI_task_parallel_range(0,
-                          thread_num,
-                          data,
-                          max_interactions ? bvhtree_overlap_num_task_cb : bvhtree_overlap_task_cb,
-                          &settings);
+  if (use_threading) {
+    TaskParallelSettings settings;
+    BLI_parallel_range_settings_defaults(&settings);
+    settings.min_iter_per_thread = 1;
+    BLI_task_parallel_range(0,
+                            root_node_len,
+                            data,
+                            max_interactions ? bvhtree_overlap_num_task_cb :
+                                               bvhtree_overlap_task_cb,
+                            &settings);
+  }
+  else {
+    if (max_interactions) {
+      tree_overlap_num_recursive(data, root1, root2);
+    }
+    else if (callback) {
+      tree_overlap_traverse_cb(data, root1, root2);
+    }
+    else {
+      tree_overlap_traverse(data, root1, root2);
+    }
+  }
 
   if (overlap_pairs) {
     for (j = 0; j < thread_num; j++) {
