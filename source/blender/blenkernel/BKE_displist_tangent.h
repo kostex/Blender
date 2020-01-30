@@ -14,14 +14,13 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#ifndef __BKE_DISPLIST_TANGENT_H__
+#define __BKE_DISPLIST_TANGENT_H__
+
 /** \file
- * \ingroup bmesh
+ * \ingroup bke
  */
 
-#ifndef __BMESH_INTERSECT_EDGES_H__
-#define __BMESH_INTERSECT_EDGES_H__
+void BKE_displist_tangent_calc(const DispList *dl, float (*fnormals)[3], float (**r_tangent)[4]);
 
-bool BM_mesh_intersect_edges(
-    BMesh *bm, const char hflag, const float dist, const bool split_faces, GHash *r_targetmap);
-
-#endif /* __BMESH_INTERSECT_EDGES_H__ */
+#endif /* __BKE_DISPLIST_TANGENT_H__ */
