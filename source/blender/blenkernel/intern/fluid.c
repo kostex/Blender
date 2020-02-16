@@ -1563,7 +1563,7 @@ static void sample_mesh(FluidFlowSettings *mfs,
 
   /* Distance between two opposing vertices in a unit cube.
    * I.e. the unit cube diagonal or sqrt(3).
-   * This value is our nearest neighbour search distance. */
+   * This value is our nearest neighbor search distance. */
   const float surface_distance = 1.732;
   nearest.dist_sq = surface_distance * surface_distance; /* find_nearest uses squared distance. */
 
@@ -2283,8 +2283,8 @@ BLI_INLINE void apply_inflow_fields(FluidFlowSettings *mfs,
     /* Instead of using 1.0 for all new fuel add slight falloff to reduce flow blocky-ness. */
     float value = 1.0f - pow2f(1.0f - emission_value);
 
-    if (fuel[index] > FLT_EPSILON && value > react[index]) {
-      float f = fuel_flow / fuel[index];
+    if (fuel_in[index] > FLT_EPSILON && value >= react[index]) {
+      float f = fuel_flow / fuel_in[index];
       react_in[index] = value * f + (1.0f - f) * react[index];
       CLAMP(react_in[index], 0.0f, value);
     }
@@ -3402,7 +3402,7 @@ static void BKE_fluid_modifier_processDomain(FluidModifierData *mmd,
   resume_guide = (!is_startframe) && (mds->cache_frame_pause_guide == scene_framenr);
 
   bool read_cache, bake_cache;
-  read_cache = false,
+  read_cache = false;
   bake_cache = baking_data || baking_noise || baking_mesh || baking_particles || baking_guide;
 
   bool with_gdomain;
