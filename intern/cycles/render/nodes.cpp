@@ -4519,7 +4519,10 @@ VertexColorNode::VertexColorNode() : ShaderNode(node_type)
 void VertexColorNode::attributes(Shader *shader, AttributeRequestSet *attributes)
 {
   if (!(output("Color")->links.empty() && output("Alpha")->links.empty())) {
-    attributes->add_standard(layer_name);
+    if (layer_name != "")
+      attributes->add_standard(layer_name);
+    else
+      attributes->add(ATTR_STD_VERTEX_COLOR);
   }
   ShaderNode::attributes(shader, attributes);
 }
@@ -4528,7 +4531,14 @@ void VertexColorNode::compile(SVMCompiler &compiler)
 {
   ShaderOutput *color_out = output("Color");
   ShaderOutput *alpha_out = output("Alpha");
-  int layer_id = compiler.attribute(layer_name);
+  int layer_id = 0;
+
+  if (layer_name != "") {
+    layer_id = compiler.attribute(layer_name);
+  }
+  else {
+    layer_id = compiler.attribute(ATTR_STD_VERTEX_COLOR);
+  }
 
   ShaderNodeType node;
 
@@ -4555,7 +4565,19 @@ void VertexColorNode::compile(OSLCompiler &compiler)
   else {
     compiler.parameter("bump_offset", "center");
   }
-  compiler.parameter("layer_name", layer_name.c_str());
+
+  if (layer_name.empty()) {
+    compiler.parameter("layer_name", ustring("geom:vertex_color"));
+  }
+  else {
+    if (Attribute::name_standard(layer_name.c_str()) != ATTR_STD_NONE) {
+      compiler.parameter("name", (string("geom:") + layer_name.c_str()).c_str());
+    }
+    else {
+      compiler.parameter("layer_name", layer_name.c_str());
+    }
+  }
+
   compiler.add(this, "node_vertex_color");
 }
 
@@ -6129,6 +6151,64 @@ void VectorMathNode::compile(OSLCompiler &compiler)
 {
   compiler.parameter(this, "type");
   compiler.add(this, "node_vector_math");
+}
+
+/* Vector Rotate */
+
+NODE_DEFINE(VectorRotateNode)
+{
+  NodeType *type = NodeType::add("vector_rotate", create, NodeType::SHADER);
+
+  static NodeEnum type_enum;
+  type_enum.insert("axis", NODE_VECTOR_ROTATE_TYPE_AXIS);
+  type_enum.insert("x_axis", NODE_VECTOR_ROTATE_TYPE_AXIS_X);
+  type_enum.insert("y_axis", NODE_VECTOR_ROTATE_TYPE_AXIS_Y);
+  type_enum.insert("z_axis", NODE_VECTOR_ROTATE_TYPE_AXIS_Z);
+  type_enum.insert("euler_xyz", NODE_VECTOR_ROTATE_TYPE_EULER_XYZ);
+  type_enum.insert("euler_xzy", NODE_VECTOR_ROTATE_TYPE_EULER_XZY);
+  type_enum.insert("euler_yxz", NODE_VECTOR_ROTATE_TYPE_EULER_YXZ);
+  type_enum.insert("euler_yzx", NODE_VECTOR_ROTATE_TYPE_EULER_YZX);
+  type_enum.insert("euler_zxy", NODE_VECTOR_ROTATE_TYPE_EULER_ZXY);
+  type_enum.insert("euler_zyx", NODE_VECTOR_ROTATE_TYPE_EULER_ZYX);
+  SOCKET_ENUM(type, "Type", type_enum, NODE_VECTOR_ROTATE_TYPE_AXIS);
+
+  SOCKET_IN_VECTOR(vector, "Vector", make_float3(0.0f, 0.0f, 0.0f));
+  SOCKET_IN_POINT(rotation, "Rotation", make_float3(0.0f, 0.0f, 0.0f));
+  SOCKET_IN_POINT(center, "Center", make_float3(0.0f, 0.0f, 0.0f));
+  SOCKET_IN_VECTOR(axis, "Axis", make_float3(0.0f, 0.0f, 1.0f));
+  SOCKET_IN_FLOAT(angle, "Angle", 0.0f);
+  SOCKET_OUT_VECTOR(vector, "Vector");
+
+  return type;
+}
+
+VectorRotateNode::VectorRotateNode() : ShaderNode(node_type)
+{
+}
+
+void VectorRotateNode::compile(SVMCompiler &compiler)
+{
+  ShaderInput *vector_in = input("Vector");
+  ShaderInput *rotation_in = input("Rotation");
+  ShaderInput *center_in = input("Center");
+  ShaderInput *axis_in = input("Axis");
+  ShaderInput *angle_in = input("Angle");
+  ShaderOutput *vector_out = output("Vector");
+
+  compiler.add_node(NODE_VECTOR_ROTATE,
+                    compiler.encode_uchar4(type,
+                                           compiler.stack_assign(vector_in),
+                                           compiler.stack_assign(rotation_in)),
+                    compiler.encode_uchar4(compiler.stack_assign(center_in),
+                                           compiler.stack_assign(axis_in),
+                                           compiler.stack_assign(angle_in)),
+                    compiler.stack_assign(vector_out));
+}
+
+void VectorRotateNode::compile(OSLCompiler &compiler)
+{
+  compiler.parameter(this, "type");
+  compiler.add(this, "node_vector_rotate");
 }
 
 /* VectorTransform */
