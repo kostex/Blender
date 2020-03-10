@@ -377,7 +377,6 @@ static void file_draw_preview(uiBlock *block,
 
 static void renamebutton_cb(bContext *C, void *UNUSED(arg1), char *oldname)
 {
-  Main *bmain = CTX_data_main(C);
   char newname[FILE_MAX + 12];
   char orgname[FILE_MAX + 12];
   char filename[FILE_MAX + 12];
@@ -386,11 +385,10 @@ static void renamebutton_cb(bContext *C, void *UNUSED(arg1), char *oldname)
   ScrArea *sa = CTX_wm_area(C);
   ARegion *region = CTX_wm_region(C);
 
-  const char *blendfile_path = BKE_main_blendfile_path(bmain);
-  BLI_make_file_string(blendfile_path, orgname, sfile->params->dir, oldname);
+  BLI_join_dirfile(orgname, sizeof(orgname), sfile->params->dir, oldname);
   BLI_strncpy(filename, sfile->params->renamefile, sizeof(filename));
   BLI_filename_make_safe(filename);
-  BLI_make_file_string(blendfile_path, newname, sfile->params->dir, filename);
+  BLI_join_dirfile(newname, sizeof(newname), sfile->params->dir, filename);
 
   if (!STREQ(orgname, newname)) {
     if (!BLI_exists(newname)) {

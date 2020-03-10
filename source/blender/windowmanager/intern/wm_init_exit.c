@@ -247,7 +247,6 @@ void WM_init(bContext *C, int argc, const char **argv)
 
   ED_undosys_type_init();
 
-  BKE_library_callback_free_window_manager_set(wm_close_and_free); /* lib_id.c */
   BKE_library_callback_free_notifier_reference_set(
       WM_main_remove_notifier_reference);                    /* lib_id.c */
   BKE_region_callback_free_gizmomap_set(wm_gizmomap_remove); /* screen.c */
@@ -358,7 +357,8 @@ void WM_init(bContext *C, int argc, const char **argv)
   /* allow a path of "", this is what happens when making a new file */
 #if 0
   if (BKE_main_blendfile_path_from_global()[0] == '\0') {
-    BLI_make_file_string("/", G_MAIN->name, BKE_appdir_folder_default(), "untitled.blend");
+    BLI_join_dirfile(
+        G_MAIN->name, sizeof(G_MAIN->name), BKE_appdir_folder_default(), "untitled.blend");
   }
 #endif
 
@@ -495,7 +495,7 @@ void WM_exit_ex(bContext *C, const bool do_python)
         bool has_edited;
         int fileflags = G.fileflags & ~(G_FILE_COMPRESS | G_FILE_HISTORY);
 
-        BLI_make_file_string("/", filename, BKE_tempdir_base(), BLENDER_QUIT_FILE);
+        BLI_join_dirfile(filename, sizeof(filename), BKE_tempdir_base(), BLENDER_QUIT_FILE);
 
         has_edited = ED_editors_flush_edits(bmain);
 
