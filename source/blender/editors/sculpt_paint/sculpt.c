@@ -24,12 +24,12 @@
 
 #include "MEM_guardedalloc.h"
 
-#include "BLI_math.h"
 #include "BLI_blenlib.h"
 #include "BLI_dial_2d.h"
-#include "BLI_gsqueue.h"
 #include "BLI_ghash.h"
+#include "BLI_gsqueue.h"
 #include "BLI_hash.h"
+#include "BLI_math.h"
 #include "BLI_task.h"
 #include "BLI_utildefines.h"
 
@@ -37,13 +37,13 @@
 
 #include "PIL_time.h"
 
+#include "DNA_brush_types.h"
 #include "DNA_customdata_types.h"
 #include "DNA_mesh_types.h"
 #include "DNA_meshdata_types.h"
 #include "DNA_node_types.h"
 #include "DNA_object_types.h"
 #include "DNA_scene_types.h"
-#include "DNA_brush_types.h"
 
 #include "BKE_brush.h"
 #include "BKE_ccg.h"
@@ -75,13 +75,13 @@
 #include "DEG_depsgraph.h"
 
 #include "WM_api.h"
-#include "WM_types.h"
 #include "WM_message.h"
 #include "WM_toolsystem.h"
+#include "WM_types.h"
 
-#include "ED_sculpt.h"
 #include "ED_object.h"
 #include "ED_screen.h"
+#include "ED_sculpt.h"
 #include "ED_view3d.h"
 #include "paint_intern.h"
 #include "sculpt_intern.h"
@@ -357,9 +357,6 @@ static void SCULPT_vertex_face_set_set(SculptSession *ss, int index, int face_se
         if (ss->face_sets[vert_map->indices[j]] > 0) {
           ss->face_sets[vert_map->indices[j]] = abs(face_set);
         }
-        else {
-          ss->face_sets[vert_map->indices[j]] = -abs(face_set);
-        }
       }
     } break;
     case PBVH_BMESH:
@@ -629,6 +626,10 @@ static bool sculpt_vertex_is_boundary(SculptSession *ss, const int index)
         return false;
       }
 
+      if (!SCULPT_vertex_all_face_sets_visible_get(ss, index)) {
+        return false;
+      }
+
       for (int i = 0; i < vert_map->count; i++) {
         const MPoly *p = &ss->mpoly[vert_map->indices[i]];
         unsigned f_adj_v[2];
@@ -837,7 +838,7 @@ void SCULPT_floodfill_execute(
     sculpt_vertex_duplicates_and_neighbors_iter_begin(ss, from_v, ni)
     {
       const int to_v = ni.index;
-      if (flood->visited_vertices[to_v] == 0) {
+      if (flood->visited_vertices[to_v] == 0 && SCULPT_vertex_visible_get(ss, to_v)) {
         flood->visited_vertices[to_v] = 1;
 
         if (func(ss, from_v, to_v, ni.is_duplicate, userdata)) {
@@ -1634,17 +1635,11 @@ static float *sculpt_face_sets_automasking_init(Sculpt *sd, Object *ob, float *a
 
 #define EDGE_DISTANCE_INF -1
 
-static float *sculpt_boundary_edges_automasking_init(Sculpt *sd,
-                                                     Object *ob,
+static float *sculpt_boundary_edges_automasking_init(Object *ob,
+                                                     int propagation_steps,
                                                      float *automask_factor)
 {
   SculptSession *ss = ob->sculpt;
-  Brush *brush = BKE_paint_brush(&sd->paint);
-  const int propagation_steps = brush->automasking_boundary_edges_propagation_steps;
-
-  if (!sculpt_automasking_enabled(ss, brush)) {
-    return NULL;
-  }
 
   if (BKE_pbvh_type(ss->pbvh) == PBVH_FACES && !ss->pmap) {
     BLI_assert(!"Boundary Edges masking: pmap missing");
@@ -1694,6 +1689,10 @@ static void sculpt_automasking_init(Sculpt *sd, Object *ob)
   Brush *brush = BKE_paint_brush(&sd->paint);
   const int totvert = SCULPT_vertex_count_get(ss);
 
+  if (!sculpt_automasking_enabled(ss, brush)) {
+    return;
+  }
+
   ss->cache->automask = MEM_callocN(sizeof(float) * SCULPT_vertex_count_get(ss),
                                     "automask_factor");
 
@@ -1712,7 +1711,8 @@ static void sculpt_automasking_init(Sculpt *sd, Object *ob)
 
   if (brush->automasking_flags & BRUSH_AUTOMASKING_BOUNDARY_EDGES) {
     SCULPT_vertex_random_access_init(ss);
-    sculpt_boundary_edges_automasking_init(sd, ob, ss->cache->automask);
+    sculpt_boundary_edges_automasking_init(
+        ob, brush->automasking_boundary_edges_propagation_steps, ss->cache->automask);
   }
 }
 
@@ -3402,7 +3402,7 @@ static void do_draw_face_sets_brush_task_cb_ex(void *__restrict userdata,
                                                                   vd.index,
                                                                   tls->thread_id);
 
-      if (fade > 0.05f && SCULPT_vertex_all_face_sets_visible_get(ss, vd.index)) {
+      if (fade > 0.05f) {
         SCULPT_vertex_face_set_set(ss, vd.index, ss->cache->paint_face_set);
       }
     }
@@ -3663,6 +3663,10 @@ void SCULPT_relax_vertex(SculptSession *ss,
   if (count > 0) {
     mul_v3_fl(smooth_pos, 1.0f / (float)count);
   }
+  else {
+    copy_v3_v3(r_final_pos, vd->co);
+    return;
+  }
 
   float plane[4];
   float smooth_closest_plane[3];
@@ -3673,6 +3677,12 @@ void SCULPT_relax_vertex(SculptSession *ss,
   else {
     copy_v3_v3(vno, vd->fno);
   }
+
+  if (is_zero_v3(vno)) {
+    copy_v3_v3(r_final_pos, vd->co);
+    return;
+  }
+
   plane_from_point_normal_v3(plane, vd->co, vno);
   closest_to_plane_v3(smooth_closest_plane, plane, smooth_pos);
   sub_v3_v3v3(final_disp, smooth_closest_plane, vd->co);
@@ -8362,9 +8372,8 @@ static void SCULPT_OT_optimize(wmOperatorType *ot)
 static bool sculpt_no_multires_poll(bContext *C)
 {
   Object *ob = CTX_data_active_object(C);
-  SculptSession *ss = ob->sculpt;
-  if (ss && ss->pbvh && SCULPT_mode_poll(C)) {
-    return BKE_pbvh_type(ss->pbvh) != PBVH_GRIDS;
+  if (SCULPT_mode_poll(C) && ob->sculpt && ob->sculpt->pbvh) {
+    return BKE_pbvh_type(ob->sculpt->pbvh) != PBVH_GRIDS;
   }
   return false;
 }
@@ -9144,6 +9153,10 @@ static void sculpt_filter_cache_free(SculptSession *ss)
   if (ss->filter_cache->prev_face_set) {
     MEM_freeN(ss->filter_cache->prev_face_set);
   }
+  if (ss->filter_cache->automask) {
+    MEM_freeN(ss->filter_cache->automask);
+  }
+
   MEM_freeN(ss->filter_cache);
   ss->filter_cache = NULL;
 }
@@ -9317,7 +9330,8 @@ static void mesh_filter_task_cb(void *__restrict userdata,
         break;
       }
       case MESH_FILTER_RELAX: {
-        SCULPT_relax_vertex(ss, &vd, clamp_f(fade, 0.0f, 1.0f), false, val);
+        SCULPT_relax_vertex(
+            ss, &vd, clamp_f(fade * ss->filter_cache->automask[vd.index], 0.0f, 1.0f), false, val);
         sub_v3_v3v3(disp, val, vd.co);
         break;
       }
@@ -9464,6 +9478,16 @@ static int sculpt_mesh_filter_invoke(bContext *C, wmOperator *op, const wmEvent 
   ss->filter_cache->enabled_axis[0] = deform_axis & MESH_FILTER_DEFORM_X;
   ss->filter_cache->enabled_axis[1] = deform_axis & MESH_FILTER_DEFORM_Y;
   ss->filter_cache->enabled_axis[2] = deform_axis & MESH_FILTER_DEFORM_Z;
+
+  if (RNA_enum_get(op->ptr, "type") == MESH_FILTER_RELAX) {
+    const int totvert = SCULPT_vertex_count_get(ss);
+    ss->filter_cache->automask = MEM_mallocN(totvert * sizeof(float),
+                                             "Relax filter edge automask");
+    for (int i = 0; i < totvert; i++) {
+      ss->filter_cache->automask[i] = 1.0f;
+    }
+    sculpt_boundary_edges_automasking_init(ob, 1, ss->filter_cache->automask);
+  }
 
   WM_event_add_modal_handler(C, op);
   return OPERATOR_RUNNING_MODAL;
@@ -10074,7 +10098,7 @@ static int sculpt_mask_expand_modal(bContext *C, wmOperator *op, const wmEvent *
     mask_expand_update_it = ss->filter_cache->mask_update_it[(int)SCULPT_active_vertex_get(ss)];
   }
 
-  if ((event->type == ESCKEY && event->val == KM_PRESS) ||
+  if ((event->type == EVT_ESCKEY && event->val == KM_PRESS) ||
       (event->type == RIGHTMOUSE && event->val == KM_PRESS)) {
     /* Returning OPERATOR_CANCELLED will leak memory due to not finishing
      * undo. Better solution could be to make paint_mesh_restore_co work
@@ -10084,8 +10108,8 @@ static int sculpt_mask_expand_modal(bContext *C, wmOperator *op, const wmEvent *
   }
 
   if ((event->type == LEFTMOUSE && event->val == KM_RELEASE) ||
-      (event->type == RETKEY && event->val == KM_PRESS) ||
-      (event->type == PADENTER && event->val == KM_PRESS)) {
+      (event->type == EVT_RETKEY && event->val == KM_PRESS) ||
+      (event->type == EVT_PADENTER && event->val == KM_PRESS)) {
 
     /* Smooth iterations. */
     SculptThreadedTaskData data = {
@@ -10155,7 +10179,7 @@ static int sculpt_mask_expand_modal(bContext *C, wmOperator *op, const wmEvent *
     mask_expand_update_it = ss->filter_cache->mask_update_last_it - 1;
   }
 
-  if (!ELEM(event->type, MOUSEMOVE, LEFTCTRLKEY, RIGHTCTRLKEY)) {
+  if (!ELEM(event->type, MOUSEMOVE, EVT_LEFTCTRLKEY, EVT_RIGHTCTRLKEY)) {
     return OPERATOR_RUNNING_MODAL;
   }
 
@@ -10875,7 +10899,7 @@ static int sculpt_face_set_create_invoke(bContext *C, wmOperator *op, const wmEv
 
   if (mode == SCULPT_FACE_SET_VISIBLE) {
     for (int i = 0; i < tot_vert; i++) {
-      if (SCULPT_vertex_visible_get(ss, i) && SCULPT_vertex_all_face_sets_visible_get(ss, i)) {
+      if (SCULPT_vertex_visible_get(ss, i)) {
         SCULPT_vertex_face_set_set(ss, i, next_face_set);
       }
     }
@@ -11048,6 +11072,18 @@ static int sculpt_face_sets_change_visibility_invoke(bContext *C,
     SCULPT_face_sets_visibility_invert(ss);
   }
 
+  /* For modes that use the cursor active vertex, update the rotation origin for viewport
+   * navigation. */
+  if (ELEM(mode, SCULPT_FACE_SET_VISIBILITY_TOGGLE, SCULPT_FACE_SET_VISIBILITY_SHOW_ACTIVE)) {
+    UnifiedPaintSettings *ups = &CTX_data_tool_settings(C)->unified_paint_settings;
+    float location[3];
+    copy_v3_v3(location, SCULPT_active_vertex_co_get(ss));
+    mul_m4_v3(ob->obmat, location);
+    copy_v3_v3(ups->average_stroke_accum, location);
+    ups->average_stroke_counter = 1;
+    ups->last_stroke_valid = true;
+  }
+
   /* Sync face sets visibility and vertex visibility. */
   SCULPT_visibility_sync_all_face_sets_to_vertices(ss);
 
@@ -11115,12 +11151,13 @@ static int sculpt_face_sets_randomize_colors_invoke(bContext *C,
   int totnode;
   Mesh *mesh = ob->data;
 
-  int new_seed = BLI_hash_int(PIL_check_seconds_timer_i() & UINT_MAX);
-  mesh->face_sets_color_seed = new_seed;
+  mesh->face_sets_color_seed += 1;
   if (ss->face_sets) {
-    mesh->face_sets_color_default = ss->face_sets[0];
+    const int random_index = clamp_i(
+        ss->totpoly * BLI_hash_int_01(mesh->face_sets_color_seed), 0, max_ii(0, ss->totpoly - 1));
+    mesh->face_sets_color_default = ss->face_sets[random_index];
   }
-  BKE_pbvh_face_sets_color_set(pbvh, new_seed, mesh->face_sets_color_default);
+  BKE_pbvh_face_sets_color_set(pbvh, mesh->face_sets_color_seed, mesh->face_sets_color_default);
 
   BKE_pbvh_search_gather(pbvh, NULL, NULL, &nodes, &totnode);
   for (int i = 0; i < totnode; i++) {

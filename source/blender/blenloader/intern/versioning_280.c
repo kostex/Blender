@@ -21,8 +21,8 @@
 /* allow readfile to use deprecated functionality */
 #define DNA_DEPRECATED_ALLOW
 
-#include <string.h>
 #include <float.h>
+#include <string.h>
 
 #include "BLI_listbase.h"
 #include "BLI_math.h"
@@ -30,45 +30,48 @@
 #include "BLI_string.h"
 #include "BLI_utildefines.h"
 
+#include "DNA_defaults.h"
+
 #include "DNA_anim_types.h"
-#include "DNA_object_types.h"
+#include "DNA_armature_types.h"
 #include "DNA_camera_types.h"
 #include "DNA_cloth_types.h"
 #include "DNA_collection_types.h"
 #include "DNA_constraint_types.h"
+#include "DNA_curve_types.h"
 #include "DNA_curveprofile_types.h"
 #include "DNA_freestyle_types.h"
-#include "DNA_gpu_types.h"
-#include "DNA_gpencil_types.h"
+#include "DNA_genfile.h"
 #include "DNA_gpencil_modifier_types.h"
-#include "DNA_light_types.h"
+#include "DNA_gpencil_types.h"
+#include "DNA_gpu_types.h"
+#include "DNA_key_types.h"
 #include "DNA_layer_types.h"
+#include "DNA_light_types.h"
 #include "DNA_lightprobe_types.h"
 #include "DNA_linestyle_types.h"
 #include "DNA_material_types.h"
 #include "DNA_mesh_types.h"
 #include "DNA_modifier_types.h"
+#include "DNA_object_types.h"
 #include "DNA_particle_types.h"
 #include "DNA_rigidbody_types.h"
 #include "DNA_scene_types.h"
 #include "DNA_screen_types.h"
 #include "DNA_shader_fx_types.h"
-#include "DNA_view3d_types.h"
-#include "DNA_genfile.h"
-#include "DNA_workspace_types.h"
-#include "DNA_key_types.h"
-#include "DNA_curve_types.h"
-#include "DNA_armature_types.h"
 #include "DNA_text_types.h"
 #include "DNA_texture_types.h"
+#include "DNA_view3d_types.h"
+#include "DNA_workspace_types.h"
 #include "DNA_world_types.h"
 
 #include "BKE_animsys.h"
 #include "BKE_brush.h"
 #include "BKE_cloth.h"
 #include "BKE_collection.h"
-#include "BKE_constraint.h"
 #include "BKE_colortools.h"
+#include "BKE_constraint.h"
+#include "BKE_curveprofile.h"
 #include "BKE_customdata.h"
 #include "BKE_fcurve.h"
 #include "BKE_freestyle.h"
@@ -77,14 +80,13 @@
 #include "BKE_gpencil_modifier.h"
 #include "BKE_idprop.h"
 #include "BKE_key.h"
-#include "BKE_lib_id.h"
 #include "BKE_layer.h"
+#include "BKE_lib_id.h"
 #include "BKE_main.h"
 #include "BKE_mesh.h"
 #include "BKE_node.h"
 #include "BKE_paint.h"
 #include "BKE_pointcache.h"
-#include "BKE_curveprofile.h"
 #include "BKE_report.h"
 #include "BKE_rigidbody.h"
 #include "BKE_screen.h"
@@ -1068,8 +1070,8 @@ static void do_version_curvemapping_walker(Main *bmain, void (*callback)(CurveMa
           callback(gpmd->curve_intensity);
         }
       }
-      else if (md->type == eGpencilModifierType_Vertexcolor) {
-        VertexcolorGpencilModifierData *gpmd = (VertexcolorGpencilModifierData *)md;
+      else if (md->type == eGpencilModifierType_Tint) {
+        TintGpencilModifierData *gpmd = (TintGpencilModifierData *)md;
 
         if (gpmd->curve_intensity) {
           callback(gpmd->curve_intensity);
@@ -1091,13 +1093,6 @@ static void do_version_curvemapping_walker(Main *bmain, void (*callback)(CurveMa
       }
       else if (md->type == eGpencilModifierType_Opacity) {
         OpacityGpencilModifierData *gpmd = (OpacityGpencilModifierData *)md;
-
-        if (gpmd->curve_intensity) {
-          callback(gpmd->curve_intensity);
-        }
-      }
-      else if (md->type == eGpencilModifierType_Tint) {
-        TintGpencilModifierData *gpmd = (TintGpencilModifierData *)md;
 
         if (gpmd->curve_intensity) {
           callback(gpmd->curve_intensity);
@@ -2546,7 +2541,7 @@ void blo_do_versions_280(FileData *fd, Library *UNUSED(lib), Main *bmain)
                 V3D_SHOW_MODE_SHADE_OVERRIDE = (1 << 15),
               };
               View3D *v3d = (View3D *)sl;
-              float alpha = v3d->flag2 & V3D_SHOW_MODE_SHADE_OVERRIDE ? 0.0f : 1.0f;
+              float alpha = (v3d->flag2 & V3D_SHOW_MODE_SHADE_OVERRIDE) ? 0.0f : 1.0f;
               v3d->overlay.texture_paint_mode_opacity = alpha;
               v3d->overlay.vertex_paint_mode_opacity = alpha;
               v3d->overlay.weight_paint_mode_opacity = alpha;
@@ -4651,10 +4646,12 @@ void blo_do_versions_280(FileData *fd, Library *UNUSED(lib), Main *bmain)
             }
             case eGpencilModifierType_Noise: {
               NoiseGpencilModifierData *mmd = (NoiseGpencilModifierData *)md;
-              mmd->factor /= 25.0f;
-              mmd->factor_thickness = mmd->factor;
-              mmd->factor_strength = mmd->factor;
-              mmd->factor_uvs = mmd->factor;
+              float factor = mmd->factor / 25.0f;
+              mmd->factor = (mmd->flag & GP_NOISE_MOD_LOCATION) ? factor : 0.0f;
+              mmd->factor_thickness = (mmd->flag & GP_NOISE_MOD_STRENGTH) ? factor : 0.0f;
+              mmd->factor_strength = (mmd->flag & GP_NOISE_MOD_THICKNESS) ? factor : 0.0f;
+              mmd->factor_uvs = (mmd->flag & GP_NOISE_MOD_UV) ? factor : 0.0f;
+
               mmd->noise_scale = (mmd->flag & GP_NOISE_FULL_STROKE) ? 0.0f : 1.0f;
 
               if (mmd->curve_intensity == NULL) {
@@ -4725,16 +4722,6 @@ void blo_do_versions_280(FileData *fd, Library *UNUSED(lib), Main *bmain)
               if (mmd->flag & simple) {
                 mmd->flag &= ~simple;
                 mmd->type = GP_SUBDIV_SIMPLE;
-              }
-              break;
-            }
-            case eGpencilModifierType_Vertexcolor: {
-              VertexcolorGpencilModifierData *mmd = (VertexcolorGpencilModifierData *)md;
-              if (mmd->curve_intensity == NULL) {
-                mmd->curve_intensity = BKE_curvemapping_add(1, 0.0f, 0.0f, 1.0f, 1.0f);
-                if (mmd->curve_intensity) {
-                  BKE_curvemapping_initialize(mmd->curve_intensity);
-                }
               }
               break;
             }
@@ -4858,6 +4845,22 @@ void blo_do_versions_280(FileData *fd, Library *UNUSED(lib), Main *bmain)
             omd->fetch_jonswap = 120.0f;
           }
         }
+      }
+    }
+
+    if (!DNA_struct_find(fd->filesdna, "XrSessionSettings")) {
+      for (wmWindowManager *wm = bmain->wm.first; wm; wm = wm->id.next) {
+        const View3D *v3d_default = DNA_struct_default_get(View3D);
+
+        wm->xr.session_settings.shading = v3d_default->shading;
+        /* Don't rotate light with the viewer by default, make it fixed. */
+        wm->xr.session_settings.shading.flag |= V3D_SHADING_WORLD_ORIENTATION;
+        wm->xr.session_settings.draw_flags = (V3D_OFSDRAW_SHOW_GRIDFLOOR |
+                                              V3D_OFSDRAW_SHOW_ANNOTATION);
+        wm->xr.session_settings.clip_start = v3d_default->clip_start;
+        wm->xr.session_settings.clip_end = v3d_default->clip_end;
+
+        wm->xr.session_settings.flag = XR_SESSION_USE_POSITION_TRACKING;
       }
     }
   }

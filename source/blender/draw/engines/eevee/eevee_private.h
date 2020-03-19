@@ -125,7 +125,7 @@ extern struct DrawEngineType draw_engine_eevee_type;
   } \
   ((void)0)
 
-BLI_INLINE bool eevee_hdri_preview_overlay_enabled(View3D *v3d)
+BLI_INLINE bool eevee_hdri_preview_overlay_enabled(const View3D *v3d)
 {
   /* Only show the HDRI Preview in Shading Preview in the Viewport. */
   if (v3d == NULL || v3d->shading.type != OB_MATERIAL) {
@@ -902,6 +902,10 @@ void EEVEE_particle_hair_cache_populate(EEVEE_Data *vedata,
                                         EEVEE_ViewLayerData *sldata,
                                         Object *ob,
                                         bool *cast_shadow);
+void EEVEE_object_hair_cache_populate(EEVEE_Data *vedata,
+                                      EEVEE_ViewLayerData *sldata,
+                                      Object *ob,
+                                      bool *cast_shadow);
 void EEVEE_materials_cache_finish(EEVEE_ViewLayerData *sldata, EEVEE_Data *vedata);
 struct GPUMaterial *EEVEE_material_world_lightprobe_get(struct Scene *scene, struct World *wo);
 struct GPUMaterial *EEVEE_material_world_background_get(struct Scene *scene, struct World *wo);

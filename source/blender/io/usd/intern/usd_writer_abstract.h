@@ -19,8 +19,8 @@
 #ifndef __USD_WRITER_ABSTRACT_H__
 #define __USD_WRITER_ABSTRACT_H__
 
-#include "usd_exporter_context.h"
 #include "abstract_hierarchy_iterator.h"
+#include "usd_exporter_context.h"
 
 #include <pxr/usd/sdf/path.h>
 #include <pxr/usd/usd/stage.h>
@@ -66,7 +66,6 @@ class USDAbstractWriter : public AbstractHierarchyWriter {
 
  protected:
   virtual void do_write(HierarchyContext &context) = 0;
-  virtual bool check_is_animated(const HierarchyContext &context) const;
   pxr::UsdTimeCode get_export_time_code() const;
 
   pxr::UsdShadeMaterial ensure_usd_material(Material *material);

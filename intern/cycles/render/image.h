@@ -24,6 +24,7 @@
 
 #include "util/util_string.h"
 #include "util/util_thread.h"
+#include "util/util_transform.h"
 #include "util/util_unique_ptr.h"
 #include "util/util_vector.h"
 
@@ -80,6 +81,10 @@ class ImageMetaData {
   /* Optional color space, defaults to raw. */
   ustring colorspace;
   const char *colorspace_file_format;
+
+  /* Optional transform for 3D images. */
+  bool use_transform_3d;
+  Transform transform_3d;
 
   /* Automatically set. */
   bool compress_as_srgb;
@@ -142,7 +147,7 @@ class ImageHandle {
 
   ImageMetaData metadata();
   int svm_slot(const int tile_index = 0) const;
-  device_memory *image_memory(const int tile_index = 0) const;
+  device_texture *image_memory(const int tile_index = 0) const;
 
  protected:
   vector<int> tile_slots;
@@ -191,7 +196,7 @@ class ImageManager {
     bool builtin;
 
     string mem_name;
-    device_memory *mem;
+    device_texture *mem;
 
     int users;
     thread_mutex mutex;
@@ -212,8 +217,8 @@ class ImageManager {
 
   void load_image_metadata(Image *img);
 
-  template<TypeDesc::BASETYPE FileFormat, typename StorageType, typename DeviceType>
-  bool file_load_image(Image *img, int texture_limit, device_vector<DeviceType> &tex_img);
+  template<TypeDesc::BASETYPE FileFormat, typename StorageType>
+  bool file_load_image(Image *img, int texture_limit);
 
   void device_load_image(Device *device, Scene *scene, int slot, Progress *progress);
   void device_free_image(Device *device, int slot);

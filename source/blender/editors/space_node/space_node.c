@@ -34,14 +34,14 @@
 
 #include "BKE_context.h"
 #include "BKE_lib_id.h"
+#include "BKE_node.h"
 #include "BKE_scene.h"
 #include "BKE_screen.h"
-#include "BKE_node.h"
 
-#include "ED_space_api.h"
 #include "ED_node.h"
 #include "ED_render.h"
 #include "ED_screen.h"
+#include "ED_space_api.h"
 
 #include "UI_resources.h"
 #include "UI_view2d.h"
@@ -981,6 +981,7 @@ void ED_spacetype_node(void)
   art->listener = node_region_listener;
   art->cursor = node_cursor;
   art->event_cursor = true;
+  art->clip_gizmo_events_by_ui = true;
 
   BLI_addhead(&st->regiontypes, art);
 
