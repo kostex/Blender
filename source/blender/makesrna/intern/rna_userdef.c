@@ -3608,6 +3608,11 @@ static void rna_def_userdef_theme_space_clip(BlenderRNA *brna)
   rna_def_userdef_theme_spaces_main(srna);
   rna_def_userdef_theme_spaces_list_main(srna);
 
+  prop = RNA_def_property(srna, "grid", PROP_FLOAT, PROP_COLOR_GAMMA);
+  RNA_def_property_array(prop, 3);
+  RNA_def_property_ui_text(prop, "Grid", "");
+  RNA_def_property_update(prop, 0, "rna_userdef_theme_update");
+
   prop = RNA_def_property(srna, "marker_outline", PROP_FLOAT, PROP_COLOR_GAMMA);
   RNA_def_property_float_sdna(prop, NULL, "marker_outline");
   RNA_def_property_array(prop, 3);
@@ -6051,6 +6056,10 @@ static void rna_def_userdef_experimental(BlenderRNA *brna)
       prop,
       "Undo Speedup",
       "Use new undo speedup (WARNING: can lead to crashes and serious .blend file corruption)");
+
+  prop = RNA_def_property(srna, "use_menu_search", PROP_BOOLEAN, PROP_NONE);
+  RNA_def_property_boolean_sdna(prop, NULL, "use_menu_search", 1);
+  RNA_def_property_ui_text(prop, "Menu Search", "Search actions by menus instead of operators");
 }
 
 static void rna_def_userdef_addon_collection(BlenderRNA *brna, PropertyRNA *cprop)
