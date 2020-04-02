@@ -3746,6 +3746,8 @@ static void wm_xr_session_update_screen(Main *bmain, const wmXrData *xr_data)
       }
     }
   }
+
+  WM_main_add_notifier(NC_WM | ND_XR_DATA_CHANGED, NULL);
 }
 
 static void wm_xr_session_update_screen_on_exit_cb(const wmXrData *xr_data)
@@ -3869,14 +3871,14 @@ static void gesture_circle_modal_keymap(wmKeyConfig *keyconf)
   };
 
   /* WARNING - name is incorrect, use for non-3d views */
-  wmKeyMap *keymap = WM_modalkeymap_get(keyconf, "View3D Gesture Circle");
+  wmKeyMap *keymap = WM_modalkeymap_find(keyconf, "View3D Gesture Circle");
 
   /* this function is called for each spacetype, only needs to add map once */
   if (keymap && keymap->modal_items) {
     return;
   }
 
-  keymap = WM_modalkeymap_add(keyconf, "View3D Gesture Circle", modal_items);
+  keymap = WM_modalkeymap_ensure(keyconf, "View3D Gesture Circle", modal_items);
 
   /* assign map to operators */
   WM_modalkeymap_assign(keymap, "VIEW3D_OT_select_circle");
@@ -3899,14 +3901,14 @@ static void gesture_straightline_modal_keymap(wmKeyConfig *keyconf)
       {0, NULL, 0, NULL, NULL},
   };
 
-  wmKeyMap *keymap = WM_modalkeymap_get(keyconf, "Gesture Straight Line");
+  wmKeyMap *keymap = WM_modalkeymap_find(keyconf, "Gesture Straight Line");
 
   /* this function is called for each spacetype, only needs to add map once */
   if (keymap && keymap->modal_items) {
     return;
   }
 
-  keymap = WM_modalkeymap_add(keyconf, "Gesture Straight Line", modal_items);
+  keymap = WM_modalkeymap_ensure(keyconf, "Gesture Straight Line", modal_items);
 
   /* assign map to operators */
   WM_modalkeymap_assign(keymap, "IMAGE_OT_sample_line");
@@ -3925,14 +3927,14 @@ static void gesture_box_modal_keymap(wmKeyConfig *keyconf)
       {0, NULL, 0, NULL, NULL},
   };
 
-  wmKeyMap *keymap = WM_modalkeymap_get(keyconf, "Gesture Box");
+  wmKeyMap *keymap = WM_modalkeymap_find(keyconf, "Gesture Box");
 
   /* this function is called for each spacetype, only needs to add map once */
   if (keymap && keymap->modal_items) {
     return;
   }
 
-  keymap = WM_modalkeymap_add(keyconf, "Gesture Box", modal_items);
+  keymap = WM_modalkeymap_ensure(keyconf, "Gesture Box", modal_items);
 
   /* assign map to operators */
   WM_modalkeymap_assign(keymap, "ACTION_OT_select_box");
@@ -3976,14 +3978,14 @@ static void gesture_zoom_border_modal_keymap(wmKeyConfig *keyconf)
       {0, NULL, 0, NULL, NULL},
   };
 
-  wmKeyMap *keymap = WM_modalkeymap_get(keyconf, "Gesture Zoom Border");
+  wmKeyMap *keymap = WM_modalkeymap_find(keyconf, "Gesture Zoom Border");
 
   /* this function is called for each spacetype, only needs to add map once */
   if (keymap && keymap->modal_items) {
     return;
   }
 
-  keymap = WM_modalkeymap_add(keyconf, "Gesture Zoom Border", modal_items);
+  keymap = WM_modalkeymap_ensure(keyconf, "Gesture Zoom Border", modal_items);
 
   /* assign map to operators */
   WM_modalkeymap_assign(keymap, "VIEW2D_OT_zoom_border");

@@ -36,6 +36,7 @@
 #include "DNA_fluid_types.h"
 #include "DNA_modifier_types.h"
 #include "DNA_object_types.h"
+#include "DNA_rigidbody_types.h"
 
 #include "BKE_effect.h"
 #include "BKE_fluid.h"
@@ -497,6 +498,8 @@ static void manta_set_domain_gravity(Scene *scene, FluidDomainSettings *mds)
 
     copy_v3_v3(mds->gravity, gravity);
   }
+
+  mul_v3_fl(mds->gravity, mds->effector_weights->global_gravity);
 }
 
 static bool BKE_fluid_modifier_init(
@@ -642,6 +645,11 @@ static bool is_static_object(Object *ob)
     }
   }
 
+  /* Active rigid body objects considered to be dynamic fluid objects. */
+  if (ob->rigidbody_object && ob->rigidbody_object->type == RBO_TYPE_ACTIVE) {
+    return false;
+  }
+
   /* Finally, check if the object has animation data. If so, it is considered dynamic. */
   return !BKE_object_moves_in_time(ob, true);
 }
@@ -770,7 +778,9 @@ static void bb_combineMaps(FluidObjectBB *output,
 
           /* Values. */
           output->numobjs[index_out] = bb1.numobjs[index_in];
-          output->influence[index_out] = bb1.influence[index_in];
+          if (output->influence && bb1.influence) {
+            output->influence[index_out] = bb1.influence[index_in];
+          }
           output->distances[index_out] = bb1.distances[index_in];
           if (output->velocity && bb1.velocity) {
             copy_v3_v3(&output->velocity[index_out * 3], &bb1.velocity[index_in * 3]);
@@ -785,12 +795,14 @@ static void bb_combineMaps(FluidObjectBB *output,
 
           /* Values. */
           output->numobjs[index_out] = MAX2(bb2->numobjs[index_in], output->numobjs[index_out]);
-          if (additive) {
-            output->influence[index_out] += bb2->influence[index_in] * sample_size;
-          }
-          else {
-            output->influence[index_out] = MAX2(bb2->influence[index_in],
-                                                output->influence[index_out]);
+          if (output->influence && bb2->influence) {
+            if (additive) {
+              output->influence[index_out] += bb2->influence[index_in] * sample_size;
+            }
+            else {
+              output->influence[index_out] = MAX2(bb2->influence[index_in],
+                                                  output->influence[index_out]);
+            }
           }
           output->distances[index_out] = MIN2(bb2->distances[index_in],
                                               output->distances[index_out]);
@@ -1220,52 +1232,31 @@ static void update_obstacles(Depsgraph *depsgraph,
         continue;
       }
 
-      /* Length of one adaptive frame. If using adaptive stepping, length is smaller than actual
-       * frame length */
-      float adaptframe_length = time_per_frame / frame_length;
-      /* Adaptive frame length as percentage */
-      CLAMP(adaptframe_length, 0.0f, 1.0f);
-
-      /* More splitting because of emission subframe: If no subframes present, sample_size is 1. */
-      float sample_size = 1.0f / (float)(subframes + 1);
-
       /* First frame cannot have any subframes because there is (obviously) no previous frame from
        * where subframes could come from. */
       if (is_first_frame) {
         subframes = 0;
       }
 
-      int subframe;
+      /* More splitting because of emission subframe: If no subframes present, sample_size is 1. */
+      float sample_size = 1.0f / (float)(subframes + 1);
       float subframe_dt = dt * sample_size;
 
       /* Emission loop. When not using subframes this will loop only once. */
-      for (subframe = subframes; subframe >= 0; subframe--) {
+      for (int subframe = 0; subframe <= subframes; subframe++) {
 
         /* Temporary emission map used when subframes are enabled, i.e. at least one subframe. */
         FluidObjectBB bb_temp = {NULL};
 
         /* Set scene time */
         /* Handle emission subframe */
-        if (subframe > 0 && !is_first_frame) {
-          scene->r.subframe = adaptframe_length -
-                              sample_size * (float)(subframe) * (dt / frame_length);
+        if (subframe < subframes || time_per_frame + dt + FLT_EPSILON < frame_length) {
+          scene->r.subframe = (time_per_frame + (subframe + 1.0f) * subframe_dt) / frame_length;
           scene->r.cfra = frame - 1;
         }
-        /* Last frame in this loop (subframe == suframes). Can be real end frame or in between
-         * frames (adaptive frame). */
         else {
-          /* Handle adaptive subframe (ie has subframe fraction). Need to set according scene
-           * subframe parameter. */
-          if (time_per_frame < frame_length) {
-            scene->r.subframe = adaptframe_length;
-            scene->r.cfra = frame - 1;
-          }
-          /* Handle absolute endframe (ie no subframe fraction). Need to set the scene subframe
-           * parameter to 0 and advance current scene frame. */
-          else {
-            scene->r.subframe = 0.0f;
-            scene->r.cfra = frame;
-          }
+          scene->r.subframe = 0.0f;
+          scene->r.cfra = frame;
         }
         /* Sanity check: subframe portion must be between 0 and 1. */
         CLAMP(scene->r.subframe, 0.0f, 1.0f);
@@ -2756,53 +2747,31 @@ static void update_flowsfluids(struct Depsgraph *depsgraph,
         continue;
       }
 
-      /* Length of one adaptive frame. If using adaptive stepping, length is smaller than actual
-       * frame length */
-      float adaptframe_length = time_per_frame / frame_length;
-      /* Adaptive frame length as percentage */
-      CLAMP(adaptframe_length, 0.0f, 1.0f);
-
-      /* More splitting because of emission subframe: If no subframes present, sample_size is 1. */
-      float sample_size = 1.0f / (float)(subframes + 1);
-
       /* First frame cannot have any subframes because there is (obviously) no previous frame from
        * where subframes could come from. */
       if (is_first_frame) {
         subframes = 0;
       }
 
-      int subframe;
+      /* More splitting because of emission subframe: If no subframes present, sample_size is 1. */
+      float sample_size = 1.0f / (float)(subframes + 1);
       float subframe_dt = dt * sample_size;
 
       /* Emission loop. When not using subframes this will loop only once. */
-      for (subframe = subframes; subframe >= 0; subframe--) {
-
+      for (int subframe = 0; subframe <= subframes; subframe++) {
         /* Temporary emission map used when subframes are enabled, i.e. at least one subframe. */
         FluidObjectBB bb_temp = {NULL};
 
         /* Set scene time */
-        /* Handle emission subframe */
-        if (subframe > 0 && !is_first_frame) {
-          scene->r.subframe = adaptframe_length -
-                              sample_size * (float)(subframe) * (dt / frame_length);
+        if (subframe < subframes || time_per_frame + dt + FLT_EPSILON < frame_length) {
+          scene->r.subframe = (time_per_frame + (subframe + 1.0f) * subframe_dt) / frame_length;
           scene->r.cfra = frame - 1;
         }
-        /* Last frame in this loop (subframe == suframes). Can be real end frame or in between
-         * frames (adaptive frame). */
         else {
-          /* Handle adaptive subframe (ie has subframe fraction). Need to set according scene
-           * subframe parameter. */
-          if (time_per_frame < frame_length) {
-            scene->r.subframe = adaptframe_length;
-            scene->r.cfra = frame - 1;
-          }
-          /* Handle absolute endframe (ie no subframe fraction). Need to set the scene subframe
-           * parameter to 0 and advance current scene frame. */
-          else {
-            scene->r.subframe = 0.0f;
-            scene->r.cfra = frame;
-          }
+          scene->r.subframe = 0.0f;
+          scene->r.cfra = frame;
         }
+
         /* Sanity check: subframe portion must be between 0 and 1. */
         CLAMP(scene->r.subframe, 0.0f, 1.0f);
 #  ifdef DEBUG_PRINT
@@ -4458,6 +4427,18 @@ void BKE_fluid_particle_system_destroy(struct Object *ob, const int particle_typ
  *
  * Use for versioning, even when fluids are disabled.
  * \{ */
+
+void BKE_fluid_cache_startframe_set(FluidDomainSettings *settings, int value)
+{
+  settings->cache_frame_start = (value > settings->cache_frame_end) ? settings->cache_frame_end :
+                                                                      value;
+}
+
+void BKE_fluid_cache_endframe_set(FluidDomainSettings *settings, int value)
+{
+  settings->cache_frame_end = (value < settings->cache_frame_start) ? settings->cache_frame_start :
+                                                                      value;
+}
 
 void BKE_fluid_cachetype_mesh_set(FluidDomainSettings *settings, int cache_mesh_format)
 {

@@ -482,10 +482,10 @@ void ED_armature_edit_transform_mirror_update(Object *obedit)
 /* Armature EditMode Conversions */
 
 /* converts Bones to EditBone list, used for tools as well */
-static EditBone *make_boneList_rec(ListBase *edbo,
-                                   ListBase *bones,
-                                   EditBone *parent,
-                                   Bone *actBone)
+static EditBone *make_boneList_recursive(ListBase *edbo,
+                                         ListBase *bones,
+                                         EditBone *parent,
+                                         Bone *actBone)
 {
   EditBone *eBone;
   EditBone *eBoneAct = NULL;
@@ -562,9 +562,9 @@ static EditBone *make_boneList_rec(ListBase *edbo,
 
     BLI_addtail(edbo, eBone);
 
-    /*  Add children if necessary */
+    /* Add children if necessary. */
     if (curBone->childbase.first) {
-      eBoneTest = make_boneList_rec(edbo, &curBone->childbase, eBone, actBone);
+      eBoneTest = make_boneList_recursive(edbo, &curBone->childbase, eBone, actBone);
       if (eBoneTest) {
         eBoneAct = eBoneTest;
       }
@@ -595,7 +595,7 @@ EditBone *make_boneList(ListBase *edbo, ListBase *bones, struct Bone *actBone)
 {
   BLI_assert(!edbo->first && !edbo->last);
 
-  EditBone *active = make_boneList_rec(edbo, bones, NULL, actBone);
+  EditBone *active = make_boneList_recursive(edbo, bones, NULL, actBone);
 
   for (EditBone *ebone = edbo->first; ebone; ebone = ebone->next) {
     Bone *bone = ebone->temp.bone;
@@ -721,7 +721,7 @@ void ED_armature_from_edit(Main *bmain, bArmature *arm)
     }
   }
 
-  /*  Copy the bones from the editData into the armature */
+  /* Copy the bones from the edit-data into the armature. */
   for (eBone = arm->edbo->first; eBone; eBone = eBone->next) {
     newBone = MEM_callocN(sizeof(Bone), "bone");
     eBone->temp.bone = newBone; /* Associate the real Bones with the EditBones */
@@ -819,7 +819,7 @@ void ED_armature_edit_free(struct bArmature *arm)
 {
   EditBone *eBone;
 
-  /*  Clear the editbones list */
+  /* Clear the edit-bones list. */
   if (arm->edbo) {
     if (arm->edbo->first) {
       for (eBone = arm->edbo->first; eBone; eBone = eBone->next) {

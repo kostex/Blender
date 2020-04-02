@@ -1569,7 +1569,13 @@ static int gp_move_to_layer_exec(bContext *C, wmOperator *op)
   }
 
   /* Try to get layer */
-  target_layer = BLI_findlink(&gpd->layers, layer_num);
+  if (layer_num > -1) {
+    target_layer = BLI_findlink(&gpd->layers, layer_num);
+  }
+  else {
+    /* Create a new layer. */
+    target_layer = BKE_gpencil_layer_addnew(gpd, "GP_Layer", true);
+  }
 
   if (target_layer == NULL) {
     /* back autolock status */
@@ -1655,7 +1661,8 @@ void GPENCIL_OT_move_to_layer(wmOperatorType *ot)
   ot->flag = OPTYPE_REGISTER | OPTYPE_UNDO;
 
   /* GPencil layer to use. */
-  ot->prop = RNA_def_int(ot->srna, "layer", 0, 0, INT_MAX, "Grease Pencil Layer", "", 0, INT_MAX);
+  ot->prop = RNA_def_int(
+      ot->srna, "layer", 0, -1, INT_MAX, "Grease Pencil Layer", "", -1, INT_MAX);
   RNA_def_property_flag(ot->prop, PROP_HIDDEN | PROP_SKIP_SAVE);
 }
 
@@ -3546,7 +3553,7 @@ static int gp_strokes_reproject_exec(bContext *C, wmOperator *op)
                  GP_REPROJECT_TOP,
                  GP_REPROJECT_CURSOR)) {
           if (mode != GP_REPROJECT_CURSOR) {
-            ED_gpencil_drawing_reference_get(scene, ob, gpl, ts->gpencil_v3d_align, origin);
+            ED_gpencil_drawing_reference_get(scene, ob, ts->gpencil_v3d_align, origin);
           }
           else {
             copy_v3_v3(origin, scene->cursor.location);
@@ -4249,7 +4256,7 @@ static int gp_stroke_separate_exec(bContext *C, wmOperator *op)
             if (ED_gpencil_stroke_color_use(ob, gpl, gps) == false) {
               continue;
             }
-            /*  separate selected strokes */
+            /* Separate selected strokes. */
             if (gps->flag & GP_STROKE_SELECT) {
               /* add layer if not created before */
               if (gpl_dst == NULL) {
@@ -4422,7 +4429,7 @@ static int gp_stroke_split_exec(bContext *C, wmOperator *UNUSED(op))
           if (ED_gpencil_stroke_color_use(ob, gpl, gps) == false) {
             continue;
           }
-          /*  split selected strokes */
+          /* Split selected strokes. */
           if (gps->flag & GP_STROKE_SELECT) {
             /* make copy of source stroke */
             bGPDstroke *gps_dst = BKE_gpencil_stroke_duplicate(gps, true);

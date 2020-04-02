@@ -541,7 +541,12 @@ bGPDstroke *BKE_gpencil_stroke_new(int mat_idx, int totpoints, short thickness)
   gps->flag = GP_STROKE_3DSPACE;
 
   gps->totpoints = totpoints;
-  gps->points = MEM_callocN(sizeof(bGPDspoint) * gps->totpoints, "gp_stroke_points");
+  if (gps->totpoints > 0) {
+    gps->points = MEM_callocN(sizeof(bGPDspoint) * gps->totpoints, "gp_stroke_points");
+  }
+  else {
+    gps->points = NULL;
+  }
 
   /* initialize triangle memory to dummy data */
   gps->triangles = NULL;
@@ -1926,6 +1931,9 @@ void BKE_gpencil_visible_stroke_iter(
       }
 
       LISTBASE_FOREACH (bGPDstroke *, gps, &gpf->strokes) {
+        if (gps->totpoints == 0) {
+          continue;
+        }
         stroke_cb(gpl, gpf, gps, thunk);
       }
     }
@@ -1939,6 +1947,9 @@ void BKE_gpencil_visible_stroke_iter(
       }
 
       LISTBASE_FOREACH (bGPDstroke *, gps, &act_gpf->strokes) {
+        if (gps->totpoints == 0) {
+          continue;
+        }
         stroke_cb(gpl, act_gpf, gps, thunk);
       }
     }
