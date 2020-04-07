@@ -377,23 +377,25 @@ static short apply_targetless_ik(Object *ob)
       }
       for (; segcount; segcount--) {
         Bone *bone;
-        float rmat[4][4] /*, tmat[4][4], imat[4][4]*/;
+        float mat[4][4];
 
         /* pose_mat(b) = pose_mat(b-1) * offs_bone * channel * constraint * IK  */
-        /* we put in channel the entire result of rmat = (channel * constraint * IK) */
-        /* pose_mat(b) = pose_mat(b-1) * offs_bone * rmat  */
-        /* rmat = pose_mat(b) * inv(pose_mat(b-1) * offs_bone ) */
+        /* we put in channel the entire result of mat = (channel * constraint * IK) */
+        /* pose_mat(b) = pose_mat(b-1) * offs_bone * mat  */
+        /* mat = pose_mat(b) * inv(pose_mat(b-1) * offs_bone ) */
 
         parchan = chanlist[segcount - 1];
         bone = parchan->bone;
         bone->flag |= BONE_TRANSFORM; /* ensures it gets an auto key inserted */
 
-        BKE_armature_mat_pose_to_bone(parchan, parchan->pose_mat, rmat);
-
+        BKE_armature_mat_pose_to_bone(parchan, parchan->pose_mat, mat);
         /* apply and decompose, doesn't work for constraints or non-uniform scale well */
         {
           float rmat3[3][3], qrmat[3][3], imat3[3][3], smat[3][3];
-          copy_m3_m4(rmat3, rmat);
+
+          copy_m3_m4(rmat3, mat);
+          /* Make sure that our rotation matrix only contains rotation and not scale. */
+          normalize_m3(rmat3);
 
           /* rotation */
           /* [#22409] is partially caused by this, as slight numeric error introduced during
@@ -413,7 +415,7 @@ static short apply_targetless_ik(Object *ob)
 
           /* causes problems with some constraints (e.g. childof), so disable this */
           /* as it is IK shouldn't affect location directly */
-          /* copy_v3_v3(parchan->loc, rmat[3]); */
+          /* copy_v3_v3(parchan->loc, mat[3]); */
         }
       }
 
@@ -1026,7 +1028,7 @@ static void posttrans_fcurve_clean(FCurve *fcu,
   }
   else {
     /* Compute the average values for each retained keyframe */
-    for (tRetainedKeyframe *rk = retained_keys.first; rk; rk = rk->next) {
+    LISTBASE_FOREACH (tRetainedKeyframe *, rk, &retained_keys) {
       rk->val = rk->val / (float)rk->tot_count;
     }
   }
@@ -1128,10 +1130,10 @@ static void posttrans_action_clean(bAnimContext *ac, bAction *act)
 /* struct for use in re-sorting BezTriples during Graph Editor transform */
 typedef struct BeztMap {
   BezTriple *bezt;
-  unsigned int oldIndex; /* index of bezt in fcu->bezt array before sorting */
-  unsigned int newIndex; /* index of bezt in fcu->bezt array after sorting */
-  short swapHs;          /* swap order of handles (-1=clear; 0=not checked, 1=swap) */
-  char pipo, cipo;       /* interpolation of current and next segments */
+  uint oldIndex;   /* index of bezt in fcu->bezt array before sorting */
+  uint newIndex;   /* index of bezt in fcu->bezt array after sorting */
+  short swapHs;    /* swap order of handles (-1=clear; 0=not checked, 1=swap) */
+  char pipo, cipo; /* interpolation of current and next segments */
 } BeztMap;
 
 /* This function converts an FCurve's BezTriple array to a BeztMap array
@@ -1309,7 +1311,7 @@ static void beztmap_to_data(TransInfo *t, FCurve *fcu, BeztMap *bezms, int totve
  */
 void remake_graph_transdata(TransInfo *t, ListBase *anim_data)
 {
-  SpaceGraph *sipo = (SpaceGraph *)t->sa->spacedata.first;
+  SpaceGraph *sipo = (SpaceGraph *)t->area->spacedata.first;
   bAnimListElem *ale;
   const bool use_handle = (sipo->flag & SIPO_NOHANDLES) == 0;
 
@@ -1749,13 +1751,12 @@ bool motionpath_need_update_pose(Scene *scene, Object *ob)
 
 static void special_aftertrans_update__movieclip(bContext *C, TransInfo *t)
 {
-  SpaceClip *sc = t->sa->spacedata.first;
+  SpaceClip *sc = t->area->spacedata.first;
   MovieClip *clip = ED_space_clip_get_clip(sc);
   ListBase *plane_tracks_base = BKE_tracking_get_active_plane_tracks(&clip->tracking);
   const int framenr = ED_space_clip_get_clip_frame_number(sc);
   /* Update coordinates of modified plane tracks. */
-  for (MovieTrackingPlaneTrack *plane_track = plane_tracks_base->first; plane_track;
-       plane_track = plane_track->next) {
+  LISTBASE_FOREACH (MovieTrackingPlaneTrack *, plane_track, plane_tracks_base) {
     bool do_update = false;
     if (plane_track->flag & PLANE_TRACK_HIDDEN) {
       continue;
@@ -1791,11 +1792,11 @@ static void special_aftertrans_update__mask(bContext *C, TransInfo *t)
   Mask *mask = NULL;
 
   if (t->spacetype == SPACE_CLIP) {
-    SpaceClip *sc = t->sa->spacedata.first;
+    SpaceClip *sc = t->area->spacedata.first;
     mask = ED_space_clip_get_mask(sc);
   }
   else if (t->spacetype == SPACE_IMAGE) {
-    SpaceImage *sima = t->sa->spacedata.first;
+    SpaceImage *sima = t->area->spacedata.first;
     mask = ED_space_image_get_mask(sima);
   }
   else {
@@ -1826,7 +1827,7 @@ static void special_aftertrans_update__node(bContext *C, TransInfo *t)
 
   if (canceled && t->remove_on_cancel) {
     /* remove selected nodes on cancel */
-    SpaceNode *snode = (SpaceNode *)t->sa->spacedata.first;
+    SpaceNode *snode = (SpaceNode *)t->area->spacedata.first;
     bNodeTree *ntree = snode->edittree;
     if (ntree) {
       bNode *node, *node_next;
@@ -1949,7 +1950,7 @@ void special_aftertrans_update(bContext *C, TransInfo *t)
     /* freeSeqData in transform_conversions.c does this
      * keep here so the else at the end wont run... */
 
-    SpaceSeq *sseq = (SpaceSeq *)t->sa->spacedata.first;
+    SpaceSeq *sseq = (SpaceSeq *)t->area->spacedata.first;
 
     /* Marker transform, not especially nice but we may want to move markers
      * at the same time as strips in the Video Sequencer. */
@@ -1975,16 +1976,16 @@ void special_aftertrans_update(bContext *C, TransInfo *t)
     }
   }
   else if (t->spacetype == SPACE_NODE) {
-    SpaceNode *snode = (SpaceNode *)t->sa->spacedata.first;
+    SpaceNode *snode = (SpaceNode *)t->area->spacedata.first;
     special_aftertrans_update__node(C, t);
     if (canceled == 0) {
       ED_node_post_apply_transform(C, snode->edittree);
 
-      ED_node_link_insert(bmain, t->sa);
+      ED_node_link_insert(bmain, t->area);
     }
 
     /* clear link line */
-    ED_node_link_intersect_test(t->sa, 0);
+    ED_node_link_intersect_test(t->area, 0);
   }
   else if (t->spacetype == SPACE_CLIP) {
     if (t->options & CTX_MOVIECLIP) {
@@ -1995,7 +1996,7 @@ void special_aftertrans_update(bContext *C, TransInfo *t)
     }
   }
   else if (t->spacetype == SPACE_ACTION) {
-    SpaceAction *saction = (SpaceAction *)t->sa->spacedata.first;
+    SpaceAction *saction = (SpaceAction *)t->area->spacedata.first;
     bAnimContext ac;
 
     /* initialize relevant anim-context 'context' data */
@@ -2078,12 +2079,12 @@ void special_aftertrans_update(bContext *C, TransInfo *t)
         const int filter = ANIMFILTER_DATA_VISIBLE;
         ANIM_animdata_filter(&ac, &anim_data, filter, ac.data, ac.datatype);
 
-        for (bAnimListElem *ale = anim_data.first; ale; ale = ale->next) {
+        LISTBASE_FOREACH (bAnimListElem *, ale, &anim_data) {
           if (ale->datatype == ALE_GPFRAME) {
             ale->id->tag |= LIB_TAG_DOIT;
           }
         }
-        for (bAnimListElem *ale = anim_data.first; ale; ale = ale->next) {
+        LISTBASE_FOREACH (bAnimListElem *, ale, &anim_data) {
           if (ale->datatype == ALE_GPFRAME) {
             if (ale->id->tag & LIB_TAG_DOIT) {
               ale->id->tag &= ~LIB_TAG_DOIT;
@@ -2109,12 +2110,12 @@ void special_aftertrans_update(bContext *C, TransInfo *t)
         const int filter = ANIMFILTER_DATA_VISIBLE;
         ANIM_animdata_filter(&ac, &anim_data, filter, ac.data, ac.datatype);
 
-        for (bAnimListElem *ale = anim_data.first; ale; ale = ale->next) {
+        LISTBASE_FOREACH (bAnimListElem *, ale, &anim_data) {
           if (ale->datatype == ALE_MASKLAY) {
             ale->id->tag |= LIB_TAG_DOIT;
           }
         }
-        for (bAnimListElem *ale = anim_data.first; ale; ale = ale->next) {
+        LISTBASE_FOREACH (bAnimListElem *, ale, &anim_data) {
           if (ale->datatype == ALE_MASKLAY) {
             if (ale->id->tag & LIB_TAG_DOIT) {
               ale->id->tag &= ~LIB_TAG_DOIT;
@@ -2159,7 +2160,7 @@ void special_aftertrans_update(bContext *C, TransInfo *t)
     saction->flag &= ~SACTION_MOVING;
   }
   else if (t->spacetype == SPACE_GRAPH) {
-    SpaceGraph *sipo = (SpaceGraph *)t->sa->spacedata.first;
+    SpaceGraph *sipo = (SpaceGraph *)t->area->spacedata.first;
     bAnimContext ac;
     const bool use_handle = (sipo->flag & SIPO_NOHANDLES) == 0;
 
@@ -2248,9 +2249,8 @@ void special_aftertrans_update(bContext *C, TransInfo *t)
   else if (t->flag & T_EDIT) {
     if (t->obedit_type == OB_MESH) {
       FOREACH_TRANS_DATA_CONTAINER (t, tc) {
-        BMEditMesh *em = BKE_editmesh_from_object(tc->obedit);
         /* table needs to be created for each edit command, since vertices can move etc */
-        ED_mesh_mirror_spatial_table(tc->obedit, em, NULL, NULL, 'e');
+        ED_mesh_mirror_spatial_table_end(tc->obedit);
         /* TODO(campbell): xform: We need support for many mirror objects at once! */
         break;
       }

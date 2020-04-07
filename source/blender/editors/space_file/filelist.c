@@ -264,7 +264,7 @@ enum {
 
 typedef struct FileListEntryPreview {
   char path[FILE_MAX];
-  unsigned int flags;
+  uint flags;
   int index;
   ImBuf *img;
 } FileListEntryPreview;
@@ -635,7 +635,7 @@ static bool is_hidden_dot_filename(const char *filename, FileListInternEntry *fi
   /* filename might actually be a piece of path, in which case we have to check all its parts. */
 
   bool hidden = false;
-  char *sep = (char *)BLI_last_slash(filename);
+  char *sep = (char *)BLI_path_slash_rfind(filename);
 
   if (!hidden && sep) {
     char tmp_filename[FILE_MAX_LIBEXTRA];
@@ -654,7 +654,7 @@ static bool is_hidden_dot_filename(const char *filename, FileListInternEntry *fi
         break;
       }
       *sep = '\0';
-      sep = (char *)BLI_last_slash(tmp_filename);
+      sep = (char *)BLI_path_slash_rfind(tmp_filename);
     }
   }
   return hidden;
@@ -1023,7 +1023,7 @@ static int filelist_geticon_ex(FileDirEntry *file,
         FSMenuEntry *tfsm = ED_fsmenu_get_category(fsmenu, categories[i]);
         char fullpath[FILE_MAX_LIBEXTRA];
         BLI_join_dirfile(fullpath, sizeof(fullpath), root, file->relpath);
-        BLI_add_slash(fullpath);
+        BLI_path_slash_ensure(fullpath);
         for (; tfsm; tfsm = tfsm->next) {
           if (STREQ(tfsm->path, fullpath)) {
             /* Never want a little folder inside a large one. */
@@ -1112,7 +1112,7 @@ int filelist_geticon(struct FileList *filelist, const int index, const bool is_m
 
 static void parent_dir_until_exists_or_default_root(char *dir)
 {
-  if (!BLI_parent_dir_until_exists(dir)) {
+  if (!BLI_path_parent_dir_until_exists(dir)) {
 #ifdef WIN32
     get_default_root(dir);
 #else
@@ -1624,7 +1624,7 @@ void filelist_setdir(struct FileList *filelist, char *r_dir)
 {
   BLI_assert(strlen(r_dir) < FILE_MAX_LIBEXTRA);
 
-  BLI_cleanup_dir(BKE_main_blendfile_path_from_global(), r_dir);
+  BLI_path_normalize_dir(BKE_main_blendfile_path_from_global(), r_dir);
   const bool is_valid_path = filelist->checkdirf(filelist, r_dir, true);
   BLI_assert(is_valid_path);
   UNUSED_VARS_NDEBUG(is_valid_path);
@@ -2325,16 +2325,16 @@ int filelist_empty(struct FileList *filelist)
   return (filelist->filelist.nbr_entries == 0);
 }
 
-unsigned int filelist_entry_select_set(const FileList *filelist,
-                                       const FileDirEntry *entry,
-                                       FileSelType select,
-                                       unsigned int flag,
-                                       FileCheckType check)
+uint filelist_entry_select_set(const FileList *filelist,
+                               const FileDirEntry *entry,
+                               FileSelType select,
+                               uint flag,
+                               FileCheckType check)
 {
   /* Default NULL pointer if not found is fine here! */
   void **es_p = BLI_ghash_lookup_p(filelist->selection_state, entry->uuid);
-  unsigned int entry_flag = es_p ? POINTER_AS_UINT(*es_p) : 0;
-  const unsigned int org_entry_flag = entry_flag;
+  uint entry_flag = es_p ? POINTER_AS_UINT(*es_p) : 0;
+  const uint org_entry_flag = entry_flag;
 
   BLI_assert(entry);
   BLI_assert(ELEM(check, CHECK_DIRS, CHECK_FILES, CHECK_ALL));
@@ -2373,11 +2373,8 @@ unsigned int filelist_entry_select_set(const FileList *filelist,
   return entry_flag;
 }
 
-void filelist_entry_select_index_set(FileList *filelist,
-                                     const int index,
-                                     FileSelType select,
-                                     unsigned int flag,
-                                     FileCheckType check)
+void filelist_entry_select_index_set(
+    FileList *filelist, const int index, FileSelType select, uint flag, FileCheckType check)
 {
   FileDirEntry *entry = filelist_file(filelist, index);
 
@@ -2386,11 +2383,8 @@ void filelist_entry_select_index_set(FileList *filelist,
   }
 }
 
-void filelist_entries_select_index_range_set(FileList *filelist,
-                                             FileSelection *sel,
-                                             FileSelType select,
-                                             unsigned int flag,
-                                             FileCheckType check)
+void filelist_entries_select_index_range_set(
+    FileList *filelist, FileSelection *sel, FileSelType select, uint flag, FileCheckType check)
 {
   /* select all valid files between first and last indicated */
   if ((sel->first >= 0) && (sel->first < filelist->filelist.nbr_entries_filtered) &&
@@ -2402,9 +2396,7 @@ void filelist_entries_select_index_range_set(FileList *filelist,
   }
 }
 
-unsigned int filelist_entry_select_get(FileList *filelist,
-                                       FileDirEntry *entry,
-                                       FileCheckType check)
+uint filelist_entry_select_get(FileList *filelist, FileDirEntry *entry, FileCheckType check)
 {
   BLI_assert(entry);
   BLI_assert(ELEM(check, CHECK_DIRS, CHECK_FILES, CHECK_ALL));
@@ -2418,9 +2410,7 @@ unsigned int filelist_entry_select_get(FileList *filelist,
   return 0;
 }
 
-unsigned int filelist_entry_select_index_get(FileList *filelist,
-                                             const int index,
-                                             FileCheckType check)
+uint filelist_entry_select_index_get(FileList *filelist, const int index, FileCheckType check)
 {
   FileDirEntry *entry = filelist_file(filelist, index);
 
@@ -2436,7 +2426,7 @@ unsigned int filelist_entry_select_index_get(FileList *filelist,
  */
 void filelist_entry_parent_select_set(FileList *filelist,
                                       FileSelType select,
-                                      unsigned int flag,
+                                      uint flag,
                                       FileCheckType check)
 {
   if ((filelist->filter_data.flags & FLF_HIDE_PARENT) == 0) {
@@ -2458,7 +2448,7 @@ static int groupname_to_code(const char *group)
   BLI_assert(group);
 
   BLI_strncpy(buf, group, sizeof(buf));
-  lslash = (char *)BLI_last_slash(buf);
+  lslash = (char *)BLI_path_slash_rfind(buf);
   if (lslash) {
     lslash[0] = '\0';
   }
@@ -2826,7 +2816,7 @@ static void filelist_readjob_do(const bool do_lib,
   BLI_strncpy(dir, filelist->filelist.root, sizeof(dir));
   BLI_strncpy(filter_glob, filelist->filter_data.filter_glob, sizeof(filter_glob));
 
-  BLI_cleanup_dir(main_name, dir);
+  BLI_path_normalize_dir(main_name, dir);
   td_dir->dir = BLI_strdup(dir);
 
   while (!BLI_stack_is_empty(todo_dirs) && !(*stop)) {
@@ -2852,7 +2842,7 @@ static void filelist_readjob_do(const bool do_lib,
      * Note that in the end, this means we 'cache' valid relative subdir once here,
      * this is actually better. */
     BLI_strncpy(rel_subdir, subdir, sizeof(rel_subdir));
-    BLI_cleanup_dir(root, rel_subdir);
+    BLI_path_normalize_dir(root, rel_subdir);
     BLI_path_rel(rel_subdir, root);
 
     if (do_lib) {
@@ -2894,7 +2884,7 @@ static void filelist_readjob_do(const bool do_lib,
         else {
           /* We have a directory we want to list, add it to todo list! */
           BLI_join_dirfile(dir, sizeof(dir), root, entry->relpath);
-          BLI_cleanup_dir(main_name, dir);
+          BLI_path_normalize_dir(main_name, dir);
           td_dir = BLI_stack_push_r(todo_dirs);
           td_dir->level = recursion_level + 1;
           td_dir->dir = BLI_strdup(dir);
