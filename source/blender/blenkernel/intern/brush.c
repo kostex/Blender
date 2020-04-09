@@ -1524,21 +1524,6 @@ void BKE_brush_curve_preset(Brush *b, eCurveMappingPreset preset)
   BKE_curvemapping_changed(cumap, false);
 }
 
-float BKE_brush_filter_sample_tex_3d(const MTex *mtex,
-                                     const float point[3],
-                                     float rgba[4],
-                                     const int thread,
-                                     struct ImagePool *pool)
-{
-  float intensity = 1.0;
-  if (!mtex->tex) {
-    intensity = 1;
-  }
-  externtex(
-      mtex, point, &intensity, rgba, rgba + 1, rgba + 2, rgba + 3, thread, pool, false, false);
-  return intensity;
-}
-
 /* Generic texture sampler for 3D painting systems. point has to be either in
  * region space mouse coordinates, or 3d world coordinates for 3D mapping.
  *

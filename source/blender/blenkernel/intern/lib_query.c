@@ -745,7 +745,6 @@ static void library_foreach_ID_link(Main *bmain,
           if (toolsett->sculpt) {
             library_foreach_paint(&data, &toolsett->sculpt->paint);
             CALLBACK_INVOKE(toolsett->sculpt->gravity_object, IDWALK_CB_NOP);
-            CALLBACK_INVOKE(toolsett->sculpt->filter_texture, IDWALK_CB_NOP);
           }
           if (toolsett->uvsculpt) {
             library_foreach_paint(&data, &toolsett->uvsculpt->paint);

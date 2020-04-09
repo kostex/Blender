@@ -991,7 +991,6 @@ typedef struct Sculpt {
   float detail_percent;
 
   struct Object *gravity_object;
-  struct Tex *filter_texture;
 } Sculpt;
 
 typedef struct UvSculpt {

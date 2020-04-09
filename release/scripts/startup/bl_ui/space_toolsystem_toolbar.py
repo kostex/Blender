@@ -1025,7 +1025,7 @@ class _defs_sculpt:
 
     @ToolDef.from_fn
     def mesh_filter():
-        def draw_settings(context, layout, tool):
+        def draw_settings(_context, layout, tool):
             props = tool.operator_properties("sculpt.mesh_filter")
             layout.prop(props, "type", expand=False)
             layout.prop(props, "strength")
@@ -1034,11 +1034,6 @@ class _defs_sculpt:
             if (props.type == "SURFACE_SMOOTH"):
                 layout.prop(props, "surface_smooth_shape_preservation", expand=False)
                 layout.prop(props, "surface_smooth_current_vertex", expand=False)
-
-            tool_settings = context.tool_settings
-            sculpt = tool_settings.sculpt
-            layout.prop(sculpt, "filter_texture")
-            layout.prop(props, "texture_size")
 
         return dict(
             idname="builtin.mesh_filter",

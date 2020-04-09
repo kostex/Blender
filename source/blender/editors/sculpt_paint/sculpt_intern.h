@@ -548,7 +548,6 @@ typedef struct SculptThreadedTaskData {
 
   int filter_type;
   float filter_strength;
-  struct MTex *filter_texture;
 
   bool use_area_cos;
   bool use_area_nos;

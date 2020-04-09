@@ -90,11 +90,6 @@ float BKE_brush_sample_masktex(const struct Scene *scene,
                                const float point[2],
                                const int thread,
                                struct ImagePool *pool);
-float BKE_brush_filter_sample_tex_3d(const struct MTex *mtex,
-                                     const float point[3],
-                                     float rgba[4],
-                                     const int thread,
-                                     struct ImagePool *pool);
 
 /* texture */
 unsigned int *BKE_brush_gen_texture_cache(struct Brush *br, int half_side, bool use_secondary);
