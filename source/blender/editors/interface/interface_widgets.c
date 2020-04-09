@@ -2230,7 +2230,7 @@ static void widget_draw_text(const uiFontStyle *fstyle,
 
       but_cursor_shape.xmin = (rect->xmin + t) - U.pixelsize;
       but_cursor_shape.ymin = rect->ymin + U.pixelsize;
-      but_cursor_shape.xmax = (rect->xmin + t) + U.pixelsize;
+      but_cursor_shape.xmax = (rect->xmin + t) + U.pixelsize*2;
       but_cursor_shape.ymax = rect->ymax - U.pixelsize;
 
       /* draw cursor */
