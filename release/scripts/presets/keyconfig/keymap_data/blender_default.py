@@ -763,7 +763,9 @@ def km_outliner(params):
          {"properties": [("all", True)]}),
         ("outliner.item_openclose", {"type": 'EVT_TWEAK_L', "value": 'ANY'},
          {"properties": [("all", False)]}),
+        # Fall through to generic context menu if the item(s) selected have no type specific actions.
         ("outliner.operation", {"type": 'RIGHTMOUSE', "value": 'PRESS'}, None),
+        op_menu("OUTLINER_MT_context_menu", {"type": 'RIGHTMOUSE', "value": 'PRESS'}),
         ("outliner.item_drag_drop", {"type": 'EVT_TWEAK_L', "value": 'ANY'}, None),
         ("outliner.item_drag_drop", {"type": 'EVT_TWEAK_L', "value": 'ANY', "shift": True}, None),
         ("outliner.show_hierarchy", {"type": 'HOME', "value": 'PRESS'}, None),
@@ -2347,6 +2349,7 @@ def km_text(params):
         ("text.scroll", {"type": 'TRACKPADPAN', "value": 'ANY'}, None),
         ("text.selection_set", {"type": 'EVT_TWEAK_L', "value": 'ANY'}, None),
         ("text.cursor_set", {"type": 'LEFTMOUSE', "value": 'PRESS'}, None),
+        ("text.selection_set", {"type": 'LEFTMOUSE', "value": 'PRESS', "shift": True}, None),
         ("text.scroll", {"type": 'WHEELUPMOUSE', "value": 'PRESS'},
          {"properties": [("lines", -1)]}),
         ("text.scroll", {"type": 'WHEELDOWNMOUSE', "value": 'PRESS'},
@@ -6514,6 +6517,16 @@ def km_sequencer_editor_tool_select_box(params):
     )
 
 
+def km_sequencer_editor_tool_generic_sample(params):
+    return (
+        "Sequencer Tool: Sample",
+        {"space_type": 'SEQUENCE_EDITOR', "region_type": 'WINDOW'},
+        {"items": [
+            ("sequencer.sample", {"type": params.tool_mouse, "value": 'PRESS'}, None),
+        ]},
+    )
+
+
 def km_sequencer_editor_tool_blade(_params):
     return (
         "Sequencer Tool: Blade",
@@ -6758,6 +6771,7 @@ def generate_keymaps(params=None):
         km_sequencer_editor_tool_select(params),
         km_sequencer_editor_tool_select_box(params),
         km_sequencer_editor_tool_blade(params),
+        km_sequencer_editor_tool_generic_sample(params),
     ]
 
 # ------------------------------------------------------------------------------

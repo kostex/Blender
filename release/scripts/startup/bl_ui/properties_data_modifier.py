@@ -396,6 +396,10 @@ class DATA_PT_modifiers(ModifierButtonsPanel, Panel):
         if md.texture_coords == 'OBJECT':
             col.label(text="Object:")
             col.prop(md, "texture_coords_object", text="")
+            obj = md.texture_coords_object
+            if obj and obj.type == 'ARMATURE':
+                col.label(text="Bone:")
+                col.prop_search(md, "texture_coords_bone", obj.data, "bones", text="")
         elif md.texture_coords == 'UV' and ob.type == 'MESH':
             col.label(text="UV Map:")
             col.prop_search(md, "uv_layer", ob.data, "uv_layers", text="")
@@ -1039,12 +1043,23 @@ class DATA_PT_modifiers(ModifierButtonsPanel, Panel):
         sub = col.row()
         sub.active = bool(md.vertex_group)
         sub.prop(md, "thickness_vertex_group", text="Factor")
+        if solidify_mode == 'NON_MANIFOLD':
+            sub = col.row()
+            sub.active = bool(md.vertex_group)
+            sub.prop(md, "use_flat_faces")
 
         if solidify_mode == 'EXTRUDE':
             col.label(text="Crease:")
             col.prop(md, "edge_crease_inner", text="Inner")
             col.prop(md, "edge_crease_outer", text="Outer")
             col.prop(md, "edge_crease_rim", text="Rim")
+            col.label(text="Bevel:")
+            col.prop(md, "bevel_convex")
+        else:
+            col.label(text="Bevel:")
+            col.prop(md, "bevel_convex")
+            col.separator()
+            col.prop(md, "nonmanifold_merge_threshold")
 
         col = split.column()
 
@@ -1244,6 +1259,9 @@ class DATA_PT_modifiers(ModifierButtonsPanel, Panel):
 
         if md.texture_coords == 'OBJECT':
             layout.prop(md, "texture_coords_object", text="Object")
+            obj = md.texture_coords_object
+            if obj and obj.type == 'ARMATURE':
+                layout.prop_search(md, "texture_coords_bone", obj.data, "bones", text="Bone")
         elif md.texture_coords == 'UV' and ob.type == 'MESH':
             layout.prop_search(md, "uv_layer", ob.data, "uv_layers")
 
@@ -1296,6 +1314,9 @@ class DATA_PT_modifiers(ModifierButtonsPanel, Panel):
             layout.prop_search(md, "uv_layer", ob.data, "uv_layers")
         elif md.texture_coords == 'OBJECT':
             layout.prop(md, "texture_coords_object")
+            obj = md.texture_coords_object
+            if obj and obj.type == 'ARMATURE':
+                layout.prop_search(md, "texture_coords_bone", obj.data, "bones")
 
         layout.separator()
 
@@ -1366,6 +1387,9 @@ class DATA_PT_modifiers(ModifierButtonsPanel, Panel):
 
                 if md.mask_tex_mapping == 'OBJECT':
                     layout.prop(md, "mask_tex_map_object", text="Object")
+                    obj = md.mask_text_map_object
+                    if obj and obj.type == 'ARMATURE':
+                        layout.prop_search(md, "mask_tex_map_bone", obj.data, "bones", text="Bone")
                 elif md.mask_tex_mapping == 'UV' and ob.type == 'MESH':
                     layout.prop_search(md, "mask_tex_uv_layer", ob.data, "uv_layers")
 
