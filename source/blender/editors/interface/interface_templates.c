@@ -688,6 +688,8 @@ static const char *template_id_browse_tip(const StructRNA *type)
         return N_("Browse Point Cloud Data to be linked");
       case ID_VO:
         return N_("Browse Volume Data to be linked");
+      case ID_SIM:
+        return N_("Browse Simulation to be linked");
     }
   }
   return N_("Browse ID data to be linked");
@@ -753,7 +755,8 @@ static uiBut *template_id_def_new_but(uiBlock *block,
                             BLT_I18NCONTEXT_ID_LIGHTPROBE,
                             BLT_I18NCONTEXT_ID_HAIR,
                             BLT_I18NCONTEXT_ID_POINTCLOUD,
-                            BLT_I18NCONTEXT_ID_VOLUME, );
+                            BLT_I18NCONTEXT_ID_VOLUME,
+                            BLT_I18NCONTEXT_ID_SIMULATION, );
   /* Note: BLT_I18N_MSGID_MULTI_CTXT takes a maximum number of parameters,
    * check the definition to see if a new call must be added when the limit
    * is exceeded. */
@@ -2249,6 +2252,10 @@ static uiLayout *gpencil_draw_modifier(uiLayout *layout, Object *ob, GpencilModi
                 0,
                 "apply_as",
                 MODIFIER_APPLY_DATA);
+
+    UI_block_lock_clear(block);
+    UI_block_lock_set(block, ob && ID_IS_LINKED(ob), ERROR_LIBDATA_MESSAGE);
+
     uiItemO(row,
             CTX_IFACE_(BLT_I18NCONTEXT_OPERATOR_DEFAULT, "Copy"),
             ICON_NONE,
