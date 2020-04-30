@@ -569,7 +569,7 @@ void ED_info_draw_stats(
   int col2 = x + longest_label + (0.5f * U.widget_unit);
 
   /* Add some extra margin above this section. */
-  *y -= (0.5f * height);
+  *y -= (1.2f * height);
 
   if (object_mode == OB_MODE_OBJECT) {
     stats_row(col1, labels[OBJ], col2, stats_fmt.totobjsel, stats_fmt.totobj, y, height);
