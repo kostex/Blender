@@ -1927,7 +1927,7 @@ void BKE_pbvh_node_get_bm_orco_data(PBVHNode *node,
 
 /**
  * \note doing a full search on all vertices here seems expensive,
- * however this is important to avoid having to recalculate boundbox & sync the buffers to the
+ * however this is important to avoid having to recalculate bound-box & sync the buffers to the
  * GPU (which is far more expensive!) See: T47232.
  */
 bool BKE_pbvh_node_vert_update_check_any(PBVH *bvh, PBVHNode *node)
@@ -2155,7 +2155,11 @@ static bool pbvh_faces_node_raycast(PBVH *bvh,
         float location[3] = {0.0f};
         madd_v3_v3v3fl(location, ray_start, ray_normal, *depth);
         for (int j = 0; j < 3; j++) {
-          if (len_squared_v3v3(location, co[j]) < len_squared_v3v3(location, nearest_vertex_co)) {
+          /* Always assign nearest_vertex_co in the first iteration to avoid comparison against
+           * uninitialized values. This stores the closest vertex in the current intersecting
+           * triangle. */
+          if (j == 0 ||
+              len_squared_v3v3(location, co[j]) < len_squared_v3v3(location, nearest_vertex_co)) {
             copy_v3_v3(nearest_vertex_co, co[j]);
             *r_active_vertex_index = mloop[lt->tri[j]].v;
             *r_active_face_index = lt->poly;
@@ -2235,8 +2239,11 @@ static bool pbvh_grids_node_raycast(PBVH *bvh,
             const int y_it[4] = {0, 0, 1, 1};
 
             for (int j = 0; j < 4; j++) {
-              if (len_squared_v3v3(location, co[j]) <
-                  len_squared_v3v3(location, nearest_vertex_co)) {
+              /* Always assign nearest_vertex_co in the first iteration to avoid comparison against
+               * uninitialized values. This stores the closest vertex in the current intersecting
+               * quad. */
+              if (j == 0 || len_squared_v3v3(location, co[j]) <
+                                len_squared_v3v3(location, nearest_vertex_co)) {
                 copy_v3_v3(nearest_vertex_co, co[j]);
 
                 *r_active_vertex_index = gridkey->grid_area * grid_index +

@@ -64,7 +64,7 @@
 #include "BKE_duplilist.h"
 #include "BKE_effect.h"
 #include "BKE_font.h"
-#include "BKE_gpencil_geom.h"
+#include "BKE_gpencil_curve.h"
 #include "BKE_hair.h"
 #include "BKE_key.h"
 #include "BKE_lattice.h"
@@ -1357,6 +1357,7 @@ static int collection_instance_add_exec(bContext *C, wmOperator *op)
     Object *ob = ED_object_add_type(
         C, OB_EMPTY, collection->id.name + 2, loc, rot, false, local_view_bits);
     ob->instance_collection = collection;
+    ob->empty_drawsize = U.collection_instance_empty_size;
     ob->transflag |= OB_DUPLICOLLECTION;
     id_us_plus(&collection->id);
 
@@ -2539,7 +2540,12 @@ static int convert_exec(bContext *C, wmOperator *op)
     }
 
     if (!keep_original && (ob->flag & OB_DONE)) {
-      DEG_id_tag_update(&ob->id, ID_RECALC_GEOMETRY);
+      /* NOTE: Tag transform for update because object parenting to curve with path is handled
+       * differently from all other cases. Converting curve to mesh and mesh to curve will likely
+       * affect the way children are evaluated.
+       * It is not enough to tag only geometry and rely on the curve parenting relations because
+       * this relation is lost when curve is converted to mesh. */
+      DEG_id_tag_update(&ob->id, ID_RECALC_GEOMETRY | ID_RECALC_TRANSFORM);
       ((ID *)ob->data)->tag &= ~LIB_TAG_DOIT; /* flag not to convert this datablock again */
     }
   }
