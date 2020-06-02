@@ -2428,6 +2428,11 @@ void DepsgraphRelationBuilder::build_texture(Tex *texture)
     ComponentKey animation_key(&texture->id, NodeType::ANIMATION);
     add_relation(animation_key, texture_key, "Datablock Animation");
   }
+
+  if (BKE_image_user_id_has_animation(&texture->id)) {
+    ComponentKey image_animation_key(&texture->id, NodeType::IMAGE_ANIMATION);
+    add_relation(image_animation_key, texture_key, "Datablock Image Animation");
+  }
 }
 
 void DepsgraphRelationBuilder::build_image(Image *image)
@@ -2884,6 +2889,9 @@ void DepsgraphRelationBuilder::build_driver_relations(IDNode *id_node)
   DriverGroupMap driver_groups;
 
   LISTBASE_FOREACH (FCurve *, fcu, &adt->drivers) {
+    if (fcu->rna_path == nullptr) {
+      continue;
+    }
     // Get the RNA path except the part after the last dot.
     char *last_dot = strrchr(fcu->rna_path, '.');
     string rna_prefix;
@@ -2934,7 +2942,7 @@ void DepsgraphRelationBuilder::build_driver_relations(IDNode *id_node)
       }
     }
   }
-}
+}  // namespace DEG
 
 /* **** ID traversal callbacks functions **** */
 

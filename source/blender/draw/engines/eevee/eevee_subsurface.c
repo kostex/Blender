@@ -145,7 +145,7 @@ void EEVEE_subsurface_draw_init(EEVEE_ViewLayerData *sldata, EEVEE_Data *vedata)
     }
     else {
       GPU_FRAMEBUFFER_FREE_SAFE(fbl->sss_accum_fb);
-      txl->sss_accum = NULL;
+      DRW_TEXTURE_FREE_SAFE(txl->sss_accum);
     }
   }
   else {
@@ -154,11 +154,11 @@ void EEVEE_subsurface_draw_init(EEVEE_ViewLayerData *sldata, EEVEE_Data *vedata)
     GPU_FRAMEBUFFER_FREE_SAFE(fbl->sss_resolve_fb);
     GPU_FRAMEBUFFER_FREE_SAFE(fbl->sss_clear_fb);
     GPU_FRAMEBUFFER_FREE_SAFE(fbl->sss_accum_fb);
+    DRW_TEXTURE_FREE_SAFE(txl->sss_accum);
     effects->sss_stencil = NULL;
     effects->sss_blur = NULL;
     effects->sss_irradiance = NULL;
     effects->sss_radius = NULL;
-    txl->sss_accum = NULL;
   }
 }
 
@@ -350,23 +350,15 @@ void EEVEE_subsurface_compute(EEVEE_ViewLayerData *sldata, EEVEE_Data *vedata)
     if (!DRW_pass_is_empty(psl->sss_translucency_ps)) {
       /* We sample the shadow-maps using normal sampler. We need to disable Comparison mode.
        * TODO(fclem) avoid this by using sampler objects.*/
-      GPU_texture_bind(sldata->shadow_cube_pool, 0);
       GPU_texture_compare_mode(sldata->shadow_cube_pool, false);
-      GPU_texture_unbind(sldata->shadow_cube_pool);
-      GPU_texture_bind(sldata->shadow_cascade_pool, 0);
       GPU_texture_compare_mode(sldata->shadow_cascade_pool, false);
-      GPU_texture_unbind(sldata->shadow_cascade_pool);
 
       GPU_framebuffer_bind(fbl->sss_translucency_fb);
       DRW_draw_pass(psl->sss_translucency_ps);
 
       /* Reset original state. */
-      GPU_texture_bind(sldata->shadow_cube_pool, 0);
       GPU_texture_compare_mode(sldata->shadow_cube_pool, true);
-      GPU_texture_unbind(sldata->shadow_cube_pool);
-      GPU_texture_bind(sldata->shadow_cascade_pool, 0);
       GPU_texture_compare_mode(sldata->shadow_cascade_pool, true);
-      GPU_texture_unbind(sldata->shadow_cascade_pool);
     }
 
     /* 1. horizontal pass */
