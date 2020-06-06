@@ -290,7 +290,6 @@ typedef enum {
   DRW_UNIFORM_BASE_INSTANCE,
   DRW_UNIFORM_MODEL_MATRIX,
   DRW_UNIFORM_MODEL_MATRIX_INVERSE,
-  DRW_UNIFORM_MODELVIEWPROJECTION_MATRIX,
   /* WARNING: set DRWUniform->type
    * bit length accordingly. */
 } DRWUniformType;
@@ -317,10 +316,10 @@ struct DRWUniform {
     /* DRW_UNIFORM_INT_COPY */
     int ivalue[4];
   };
-  int location;           /* Use as binding point for textures and ubos. */
-  uint32_t type : 5;      /* DRWUniformType */
-  uint32_t length : 5;    /* cannot be more than 16 */
-  uint32_t arraysize : 5; /* cannot be more than 16 too */
+  int location;      /* Uniform location or binding point for textures and ubos. */
+  uint8_t type;      /* DRWUniformType */
+  uint8_t length;    /* Length of vector types. */
+  uint8_t arraysize; /* Array size of scalar/vector types. */
 };
 
 struct DRWShadingGroup {
@@ -335,10 +334,13 @@ struct DRWShadingGroup {
   } cmd;
 
   union {
+    /* This struct is used during cache populate. */
     struct {
       int objectinfo;                /* Equal to 1 if the shader needs obinfos. */
       DRWResourceHandle pass_handle; /* Memblock key to parent pass. */
     };
+    /* This struct is used after cache populate if using the Z sorting.
+     * It will not conflict with the above struct. */
     struct {
       float distance;      /* Distance from camera. */
       uint original_index; /* Original position inside the shgroup list. */

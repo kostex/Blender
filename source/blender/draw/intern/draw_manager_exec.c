@@ -66,7 +66,6 @@ typedef struct DRWCommandsState {
   /* Legacy matrix support. */
   int obmat_loc;
   int obinv_loc;
-  int mvp_loc;
   /* Selection ID state. */
   GPUVertBuf *select_buf;
   uint select_id;
@@ -455,6 +454,8 @@ void DRW_state_reset(void)
 {
   DRW_state_reset_ex(DRW_STATE_DEFAULT);
 
+  GPU_texture_unbind_all();
+
   /* Should stay constant during the whole rendering. */
   GPU_point_size(5);
   GPU_line_smooth(false);
@@ -656,8 +657,7 @@ static void draw_compute_culling(DRWView *view)
 BLI_INLINE void draw_legacy_matrix_update(DRWShadingGroup *shgroup,
                                           DRWResourceHandle *handle,
                                           float obmat_loc,
-                                          float obinv_loc,
-                                          float mvp_loc)
+                                          float obinv_loc)
 {
   /* Still supported for compatibility with gpu_shader_* but should be forbidden. */
   DRWObjectMatrix *ob_mats = DRW_memblock_elem_from_handle(DST.vmempool->obmats, handle);
@@ -666,13 +666,6 @@ BLI_INLINE void draw_legacy_matrix_update(DRWShadingGroup *shgroup,
   }
   if (obinv_loc != -1) {
     GPU_shader_uniform_vector(shgroup->shader, obinv_loc, 16, 1, (float *)ob_mats->modelinverse);
-  }
-  /* Still supported for compatibility with gpu_shader_* but should be forbidden
-   * and is slow (since it does not cache the result). */
-  if (mvp_loc != -1) {
-    float mvp[4][4];
-    mul_m4_m4m4(mvp, DST.view_active->storage.persmat, ob_mats->model);
-    GPU_shader_uniform_vector(shgroup->shader, mvp_loc, 16, 1, (float *)mvp);
   }
 }
 
@@ -825,10 +818,10 @@ static void draw_update_uniforms(DRWShadingGroup *shgroup,
               shgroup->shader, uni->location, uni->length, uni->arraysize, uni->pvalue);
           break;
         case DRW_UNIFORM_TEXTURE:
-          GPU_texture_bind_ex(uni->texture, uni->location, false);
+          GPU_texture_bind_ex(uni->texture, uni->sampler_state, uni->location, false);
           break;
         case DRW_UNIFORM_TEXTURE_REF:
-          GPU_texture_bind_ex(*uni->texture_ref, uni->location, false);
+          GPU_texture_bind_ex(*uni->texture_ref, uni->sampler_state, uni->location, false);
           break;
         case DRW_UNIFORM_BLOCK:
           GPU_uniformbuffer_bind(uni->block, uni->location);
@@ -865,9 +858,6 @@ static void draw_update_uniforms(DRWShadingGroup *shgroup,
           break;
         case DRW_UNIFORM_MODEL_MATRIX_INVERSE:
           state->obinv_loc = uni->location;
-          break;
-        case DRW_UNIFORM_MODELVIEWPROJECTION_MATRIX:
-          state->mvp_loc = uni->location;
           break;
       }
     }
@@ -965,7 +955,7 @@ static void draw_call_resource_bind(DRWCommandsState *state, const DRWResourceHa
     }
     if (state->obinfos_loc != -1) {
       GPU_uniformbuffer_unbind(DST.vmempool->obinfos_ubo[state->resource_chunk]);
-      GPU_uniformbuffer_bind(DST.vmempool->obinfos_ubo[chunk], 1);
+      GPU_uniformbuffer_bind(DST.vmempool->obinfos_ubo[chunk], state->obinfos_loc);
     }
     state->resource_chunk = chunk;
   }
@@ -1004,10 +994,8 @@ static void draw_call_single_do(DRWShadingGroup *shgroup,
   draw_call_resource_bind(state, &handle);
 
   /* TODO This is Legacy. Need to be removed. */
-  if (state->obmats_loc == -1 &&
-      (state->obmat_loc != -1 || state->obinv_loc != -1 || state->mvp_loc != -1)) {
-    draw_legacy_matrix_update(
-        shgroup, &handle, state->obmat_loc, state->obinv_loc, state->mvp_loc);
+  if (state->obmats_loc == -1 && (state->obmat_loc != -1 || state->obinv_loc != -1)) {
+    draw_legacy_matrix_update(shgroup, &handle, state->obmat_loc, state->obinv_loc);
   }
 
   if (G.f & G_FLAG_PICKSEL) {
@@ -1113,7 +1101,6 @@ static void draw_shgroup(DRWShadingGroup *shgroup, DRWState pass_state)
       .resourceid_loc = -1,
       .obmat_loc = -1,
       .obinv_loc = -1,
-      .mvp_loc = -1,
       .drw_state_enabled = 0,
       .drw_state_disabled = 0,
   };
@@ -1124,7 +1111,11 @@ static void draw_shgroup(DRWShadingGroup *shgroup, DRWState pass_state)
   if (shader_changed) {
     if (DST.shader) {
       GPU_shader_unbind();
-      GPU_texture_unbind_all();
+
+      /* Unbinding can be costly. Skip in normal condition. */
+      if (G.debug & G_DEBUG_GPU) {
+        GPU_texture_unbind_all();
+      }
     }
     GPU_shader_bind(shgroup->shader);
     DST.shader = shgroup->shader;
@@ -1318,7 +1309,6 @@ static void drw_draw_pass_ex(DRWPass *pass,
 
   if (DST.shader) {
     GPU_shader_unbind();
-    GPU_texture_unbind_all();
     DST.shader = NULL;
   }
 
