@@ -70,11 +70,12 @@
 #include "BLI_math_base.h"
 #include "BLI_string_ref.hh"
 
+namespace blender {
 namespace FN {
 
-using BLI::IndexMask;
-using BLI::StringRef;
-using BLI::StringRefNull;
+using blender::IndexMask;
+using blender::StringRef;
+using blender::StringRefNull;
 
 class CPPType {
  public:
@@ -211,7 +212,7 @@ class CPPType {
   }
 
   /**
-   * Returns true, when the given pointer fullfills the alignment requirement of this type.
+   * Returns true, when the given pointer fulfills the alignment requirement of this type.
    */
   bool pointer_has_valid_alignment(const void *ptr) const
   {
@@ -534,30 +535,29 @@ namespace CPPTypeUtil {
 
 template<typename T> void construct_default_cb(void *ptr)
 {
-  BLI::construct_default((T *)ptr);
+  new (ptr) T;
 }
 template<typename T> void construct_default_n_cb(void *ptr, uint n)
 {
-  for (uint i = 0; i < n; i++) {
-    BLI::construct_default((T *)ptr + i);
-  }
+  blender::default_construct_n((T *)ptr, n);
 }
 template<typename T> void construct_default_indices_cb(void *ptr, IndexMask index_mask)
 {
-  index_mask.foreach_index([&](uint i) { BLI::construct_default((T *)ptr + i); });
+  index_mask.foreach_index([&](uint i) { new ((T *)ptr + i) T; });
 }
 
 template<typename T> void destruct_cb(void *ptr)
 {
-  BLI::destruct((T *)ptr);
+  ((T *)ptr)->~T();
 }
 template<typename T> void destruct_n_cb(void *ptr, uint n)
 {
-  BLI::destruct_n((T *)ptr, n);
+  blender::destruct_n((T *)ptr, n);
 }
 template<typename T> void destruct_indices_cb(void *ptr, IndexMask index_mask)
 {
-  index_mask.foreach_index([&](uint i) { BLI::destruct((T *)ptr + i); });
+  T *ptr_ = (T *)ptr;
+  index_mask.foreach_index([&](uint i) { ptr_[i].~T(); });
 }
 
 template<typename T> void copy_to_initialized_cb(const void *src, void *dst)
@@ -584,11 +584,11 @@ void copy_to_initialized_indices_cb(const void *src, void *dst, IndexMask index_
 
 template<typename T> void copy_to_uninitialized_cb(const void *src, void *dst)
 {
-  BLI::uninitialized_copy_n((T *)src, 1, (T *)dst);
+  blender::uninitialized_copy_n((T *)src, 1, (T *)dst);
 }
 template<typename T> void copy_to_uninitialized_n_cb(const void *src, void *dst, uint n)
 {
-  BLI::uninitialized_copy_n((T *)src, n, (T *)dst);
+  blender::uninitialized_copy_n((T *)src, n, (T *)dst);
 }
 template<typename T>
 void copy_to_uninitialized_indices_cb(const void *src, void *dst, IndexMask index_mask)
@@ -601,11 +601,15 @@ void copy_to_uninitialized_indices_cb(const void *src, void *dst, IndexMask inde
 
 template<typename T> void relocate_to_initialized_cb(void *src, void *dst)
 {
-  BLI::relocate((T *)src, (T *)dst);
+  T *src_ = (T *)src;
+  T *dst_ = (T *)dst;
+
+  *dst_ = std::move(*src_);
+  src_->~T();
 }
 template<typename T> void relocate_to_initialized_n_cb(void *src, void *dst, uint n)
 {
-  BLI::relocate_n((T *)src, n, (T *)dst);
+  blender::initialized_relocate_n((T *)src, n, (T *)dst);
 }
 template<typename T>
 void relocate_to_initialized_indices_cb(void *src, void *dst, IndexMask index_mask)
@@ -621,11 +625,15 @@ void relocate_to_initialized_indices_cb(void *src, void *dst, IndexMask index_ma
 
 template<typename T> void relocate_to_uninitialized_cb(void *src, void *dst)
 {
-  BLI::uninitialized_relocate((T *)src, (T *)dst);
+  T *src_ = (T *)src;
+  T *dst_ = (T *)dst;
+
+  new (dst_) T(std::move(*src_));
+  src_->~T();
 }
 template<typename T> void relocate_to_uninitialized_n_cb(void *src, void *dst, uint n)
 {
-  BLI::uninitialized_relocate_n((T *)src, n, (T *)dst);
+  blender::uninitialized_relocate_n((T *)src, n, (T *)dst);
 }
 template<typename T>
 void relocate_to_uninitialized_indices_cb(void *src, void *dst, IndexMask index_mask)
@@ -712,13 +720,14 @@ static std::unique_ptr<const CPPType> create_cpp_type(StringRef name, const T &d
 }
 
 }  // namespace FN
+}  // namespace blender
 
 #define MAKE_CPP_TYPE(IDENTIFIER, TYPE_NAME) \
   static TYPE_NAME default_value_##IDENTIFIER; \
-  static std::unique_ptr<const FN::CPPType> CPPTYPE_##IDENTIFIER##_owner = \
-      FN::create_cpp_type<TYPE_NAME>(STRINGIFY(IDENTIFIER), default_value_##IDENTIFIER); \
-  const FN::CPPType &CPPType_##IDENTIFIER = *CPPTYPE_##IDENTIFIER##_owner; \
-  template<> const FN::CPPType &FN::CPPType::get<TYPE_NAME>() \
+  static std::unique_ptr<const blender::FN::CPPType> CPPTYPE_##IDENTIFIER##_owner = \
+      blender::FN::create_cpp_type<TYPE_NAME>(STRINGIFY(IDENTIFIER), default_value_##IDENTIFIER); \
+  const blender::FN::CPPType &CPPType_##IDENTIFIER = *CPPTYPE_##IDENTIFIER##_owner; \
+  template<> const blender::FN::CPPType &blender::FN::CPPType::get<TYPE_NAME>() \
   { \
     return CPPType_##IDENTIFIER; \
   }
