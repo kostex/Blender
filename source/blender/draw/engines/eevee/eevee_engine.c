@@ -166,6 +166,7 @@ static void eevee_cache_finish(void *vedata)
   EEVEE_materials_cache_finish(sldata, vedata);
   EEVEE_lights_cache_finish(sldata, vedata);
   EEVEE_lightprobes_cache_finish(sldata, vedata);
+  EEVEE_renderpasses_cache_finish(sldata, vedata);
 
   EEVEE_subsurface_draw_init(sldata, vedata);
   EEVEE_effects_draw_init(sldata, vedata);
@@ -366,6 +367,8 @@ static void eevee_draw_scene(void *vedata)
   EEVEE_volumes_free_smoke_textures();
 
   stl->g_data->view_updated = false;
+
+  DRW_view_set_active(NULL);
 }
 
 static void eevee_view_update(void *vedata)
@@ -400,6 +403,11 @@ static void eevee_id_world_update(void *vedata, World *wo)
 {
   EEVEE_StorageList *stl = ((EEVEE_Data *)vedata)->stl;
   LightCache *lcache = stl->g_data->light_cache;
+
+  if (lcache == NULL || lcache == stl->lookdev_lightcache) {
+    /* Avoid Lookdev viewport clearing the update flag (see T67741). */
+    return;
+  }
 
   EEVEE_WorldEngineData *wedata = EEVEE_world_data_ensure(wo);
 
@@ -517,6 +525,7 @@ static void eevee_render_to_image(void *vedata,
       EEVEE_materials_cache_finish(sldata, vedata);
       EEVEE_lights_cache_finish(sldata, vedata);
       EEVEE_lightprobes_cache_finish(sldata, vedata);
+      EEVEE_renderpasses_cache_finish(sldata, vedata);
 
       EEVEE_subsurface_draw_init(sldata, vedata);
       EEVEE_effects_draw_init(sldata, vedata);
@@ -525,15 +534,16 @@ static void eevee_render_to_image(void *vedata,
 
     /* Actual drawing. */
     {
-      if (i == 0) {
-        EEVEE_renderpasses_output_init(
-            sldata, vedata, g_data->render_tot_samples * time_steps_tot);
-      }
+      EEVEE_renderpasses_output_init(sldata, vedata, g_data->render_tot_samples * time_steps_tot);
 
       EEVEE_temporal_sampling_create_view(vedata);
       EEVEE_render_draw(vedata, engine, render_layer, rect);
 
-      DRW_cache_restart();
+      if (i < time_steps_tot - 1) {
+        /* Don't reset after the last loop. Since EEVEE_render_read_result
+         * might need some DRWPasses. */
+        DRW_cache_restart();
+      }
     }
   }
 
