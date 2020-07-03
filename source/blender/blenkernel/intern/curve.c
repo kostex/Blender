@@ -1192,9 +1192,8 @@ static void basisNurb(
       }
       break;
     }
-    else {
-      basis[i] = 0.0;
-    }
+
+    basis[i] = 0.0;
   }
   basis[i] = 0.0;
 
@@ -2042,7 +2041,7 @@ static int vergxcobev(const void *a1, const void *a2)
   if (x1->left > x2->left) {
     return 1;
   }
-  else if (x1->left < x2->left) {
+  if (x1->left < x2->left) {
     return -1;
   }
   return 0;
@@ -5066,32 +5065,31 @@ bool BKE_nurb_type_convert(Nurb *nu,
         }
         return false; /* conversion impossible */
       }
-      else {
-        bezt = MEM_calloc_arrayN(nr, sizeof(BezTriple), "setsplinetype2");
-        nu->bezt = bezt;
-        a = nr;
-        bp = nu->bp;
-        while (a--) {
-          copy_v3_v3(bezt->vec[0], bp->vec);
-          bezt->f1 = bp->f1;
-          bp++;
-          copy_v3_v3(bezt->vec[1], bp->vec);
-          bezt->f2 = bp->f1;
-          bp++;
-          copy_v3_v3(bezt->vec[2], bp->vec);
-          bezt->f3 = bp->f1;
-          bezt->radius = bp->radius;
-          bezt->weight = bp->weight;
-          bp++;
-          bezt++;
-        }
-        MEM_freeN(nu->bp);
-        nu->bp = NULL;
-        MEM_freeN(nu->knotsu);
-        nu->knotsu = NULL;
-        nu->pntsu = nr;
-        nu->type = CU_BEZIER;
+
+      bezt = MEM_calloc_arrayN(nr, sizeof(BezTriple), "setsplinetype2");
+      nu->bezt = bezt;
+      a = nr;
+      bp = nu->bp;
+      while (a--) {
+        copy_v3_v3(bezt->vec[0], bp->vec);
+        bezt->f1 = bp->f1;
+        bp++;
+        copy_v3_v3(bezt->vec[1], bp->vec);
+        bezt->f2 = bp->f1;
+        bp++;
+        copy_v3_v3(bezt->vec[2], bp->vec);
+        bezt->f3 = bp->f1;
+        bezt->radius = bp->radius;
+        bezt->weight = bp->weight;
+        bp++;
+        bezt++;
       }
+      MEM_freeN(nu->bp);
+      nu->bp = NULL;
+      MEM_freeN(nu->knotsu);
+      nu->knotsu = NULL;
+      nu->pntsu = nr;
+      nu->type = CU_BEZIER;
     }
   }
 
@@ -5142,10 +5140,9 @@ int BKE_curve_nurb_vert_index_get(const Nurb *nu, const void *vert)
     BLI_assert(ARRAY_HAS_ITEM((BezTriple *)vert, nu->bezt, nu->pntsu));
     return (BezTriple *)vert - nu->bezt;
   }
-  else {
-    BLI_assert(ARRAY_HAS_ITEM((BPoint *)vert, nu->bp, nu->pntsu * nu->pntsv));
-    return (BPoint *)vert - nu->bp;
-  }
+
+  BLI_assert(ARRAY_HAS_ITEM((BPoint *)vert, nu->bp, nu->pntsu * nu->pntsv));
+  return (BPoint *)vert - nu->bp;
 }
 
 /* Set active nurb and active vert for curve */
@@ -5518,9 +5515,7 @@ bool BKE_curve_material_index_validate(Curve *cu)
     DEG_id_tag_update(&cu->id, ID_RECALC_GEOMETRY);
     return true;
   }
-  else {
-    return false;
-  }
+  return false;
 }
 
 void BKE_curve_material_remap(Curve *cu, const unsigned int *remap, unsigned int remap_len)
