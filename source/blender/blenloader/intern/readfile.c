@@ -2111,8 +2111,9 @@ void blo_end_volume_pointer_map(FileData *fd, Main *oldmain)
 
   /* used entries were restored, so we put them to zero */
   for (i = 0; i < fd->volumemap->nentries; i++, entry++) {
-    if (entry->nr > 0)
+    if (entry->nr > 0) {
       entry->newp = NULL;
+    }
   }
 
   for (; volume; volume = volume->id.next) {
@@ -2265,6 +2266,7 @@ static void blo_cache_storage_entry_register(ID *id,
                                              void *cache_storage_v)
 {
   BLI_assert(key->id_session_uuid == id->session_uuid);
+  UNUSED_VARS_NDEBUG(id);
 
   BLOCacheStorage *cache_storage = cache_storage_v;
   BLI_assert(!BLI_ghash_haskey(cache_storage->cache_map, key));
@@ -8874,7 +8876,7 @@ static void direct_link_hair(BlendDataReader *reader, Hair *hair)
   BKE_hair_update_customdata_pointers(hair);
 
   /* Materials */
-  BLO_read_pointer_array(reader, (void **)hair->mat);
+  BLO_read_pointer_array(reader, (void **)&hair->mat);
 }
 
 /** \} */
