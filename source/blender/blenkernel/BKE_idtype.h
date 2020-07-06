@@ -47,9 +47,9 @@ enum {
 };
 
 typedef struct IDCacheKey {
-  /* The session uuid of the ID owning the cached data. */
+  /* The session UUID of the ID owning the cached data. */
   unsigned int id_session_uuid;
-  /* Value uniquely indentifying the cache whithin its ID.
+  /* Value uniquely identifying the cache within its ID.
    * Typically the offset of its member in the data-block struct, but can be anything. */
   size_t offset_in_ID;
   /* Actual address of the cached data to save and restore. */
@@ -59,7 +59,7 @@ typedef struct IDCacheKey {
 uint BKE_idtype_cache_key_hash(const void *key_v);
 bool BKE_idtype_cache_key_cmp(const void *key_a_v, const void *key_b_v);
 
-/* ********** Prototypes for IDTypeInfo callbacks. ********** */
+/* ********** Prototypes for #IDTypeInfo callbacks. ********** */
 
 typedef void (*IDTypeInitDataFunction)(struct ID *id);
 
@@ -76,9 +76,15 @@ typedef void (*IDTypeMakeLocalFunction)(struct Main *bmain, struct ID *id, const
 
 typedef void (*IDTypeForeachIDFunction)(struct ID *id, struct LibraryForeachIDData *data);
 
+typedef enum eIDTypeInfoCacheCallbackFlags {
+  /** Indicates to the callback that that cache may be stored in the .blend file, so its pointer
+   * should not be cleared at readtime.*/
+  IDTYPE_CACHE_CB_FLAGS_PERSISTENT = 1 << 0,
+} eIDTypeInfoCacheCallbackFlags;
 typedef void (*IDTypeForeachCacheFunctionCallback)(struct ID *id,
                                                    const struct IDCacheKey *cache_key,
                                                    void **cache_p,
+                                                   uint flags,
                                                    void *user_data);
 typedef void (*IDTypeForeachCacheFunction)(struct ID *id,
                                            IDTypeForeachCacheFunctionCallback function_callback,
