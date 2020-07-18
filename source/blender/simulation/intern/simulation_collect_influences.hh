@@ -14,28 +14,26 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include "FN_cpp_type.hh"
+#ifndef __SIM_SIMULATION_COLLECT_INFLUENCES_HH__
+#define __SIM_SIMULATION_COLLECT_INFLUENCES_HH__
 
-#include "BLI_color.hh"
-#include "BLI_float2.hh"
-#include "BLI_float3.hh"
-#include "BLI_float4x4.hh"
+#include "NOD_derived_node_tree.hh"
 
-namespace blender::fn {
+#include "BLI_resource_collector.hh"
 
-MAKE_CPP_TYPE(bool, bool)
+#include "simulation_solver.hh"
 
-MAKE_CPP_TYPE(float, float)
-MAKE_CPP_TYPE(float3, blender::float3)
-MAKE_CPP_TYPE(float4x4, blender::float4x4)
+namespace blender::sim {
 
-MAKE_CPP_TYPE(int32, int32_t)
-MAKE_CPP_TYPE(uint32, uint32_t)
-MAKE_CPP_TYPE(uint8, uint8_t)
+struct SimulationStatesInfo {
+  VectorSet<std::string> particle_simulation_names;
+};
 
-MAKE_CPP_TYPE(Color4f, blender::Color4f)
-MAKE_CPP_TYPE(Color4b, blender::Color4b)
+void collect_simulation_influences(Simulation &simulation,
+                                   ResourceCollector &resources,
+                                   SimulationInfluences &r_influences,
+                                   SimulationStatesInfo &r_states_info);
 
-MAKE_CPP_TYPE(string, std::string)
+}  // namespace blender::sim
 
-}  // namespace blender::fn
+#endif /* __SIM_SIMULATION_COLLECT_INFLUENCES_HH__ */
