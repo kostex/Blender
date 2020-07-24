@@ -16,12 +16,15 @@
 
 #include "simulation_collect_influences.hh"
 #include "particle_function.hh"
+#include "particle_mesh_emitter.hh"
 
 #include "FN_attributes_ref.hh"
 #include "FN_multi_function_network_evaluation.hh"
 #include "FN_multi_function_network_optimization.hh"
 
 #include "NOD_node_tree_multi_function.hh"
+
+#include "DEG_depsgraph_query.h"
 
 #include "BLI_rand.hh"
 
@@ -50,31 +53,51 @@ static Span<const nodes::DNode *> get_particle_simulation_nodes(const nodes::Der
   return tree.nodes_by_type("SimulationNodeParticleSimulation");
 }
 
-static std::optional<Array<std::string>> compute_global_string_inputs(
-    nodes::MFNetworkTreeMap &network_map, Span<const fn::MFInputSocket *> sockets)
+/* Returns true on success. */
+static bool compute_global_inputs(nodes::MFNetworkTreeMap &network_map,
+                                  ResourceCollector &resources,
+                                  Span<const fn::MFInputSocket *> sockets,
+                                  MutableSpan<fn::GMutableSpan> r_results)
 {
   int amount = sockets.size();
   if (amount == 0) {
-    return Array<std::string>();
+    return true;
   }
 
   if (network_map.network().have_dummy_or_unlinked_dependencies(sockets)) {
-    return {};
+    return false;
   }
 
   fn::MFNetworkEvaluator network_fn{{}, sockets};
-
   fn::MFParamsBuilder params{network_fn, 1};
+  for (int param_index : network_fn.param_indices()) {
+    fn::MFParamType param_type = network_fn.param_type(param_index);
+    BLI_assert(param_type.category() == fn::MFParamType::Category::SingleOutput); /* For now. */
+    const fn::CPPType &type = param_type.data_type().single_type();
+    void *buffer = resources.linear_allocator().allocate(type.size(), type.alignment());
+    resources.add(buffer, type.destruct_cb(), AT);
+    fn::GMutableSpan span{type, buffer, 1};
+    r_results[param_index] = span;
+    params.add_uninitialized_single_output(span);
+  }
+  fn::MFContextBuilder context;
+  network_fn.call(IndexRange(1), params, context);
+  return true;
+}
 
-  Array<std::string> strings(amount, NoInitialization());
-  for (int i : IndexRange(amount)) {
-    params.add_uninitialized_single_output(
-        fn::GMutableSpan(fn::CPPType::get<std::string>(), strings.data() + i, 1));
+static std::optional<Array<std::string>> compute_global_string_inputs(
+    nodes::MFNetworkTreeMap &network_map, Span<const fn::MFInputSocket *> sockets)
+{
+  ResourceCollector local_resources;
+  Array<fn::GMutableSpan> computed_values(sockets.size(), NoInitialization());
+  if (!compute_global_inputs(network_map, local_resources, sockets, computed_values)) {
+    return {};
   }
 
-  fn::MFContextBuilder context;
-  network_fn.call({0}, params, context);
-
+  Array<std::string> strings(sockets.size());
+  for (int i : sockets.index_range()) {
+    strings[i] = std::move(computed_values[i].typed<std::string>()[0]);
+  }
   return strings;
 }
 
@@ -99,13 +122,12 @@ static void find_and_deduplicate_particle_attribute_nodes(nodes::MFNetworkTreeMa
     return;
   }
 
-  Map<std::pair<std::string, fn::MFDataType>, Vector<fn::MFNode *>>
+  MultiValueMap<std::pair<std::string, fn::MFDataType>, fn::MFNode *>
       attribute_nodes_by_name_and_type;
   for (int i : attribute_names->index_range()) {
-    attribute_nodes_by_name_and_type
-        .lookup_or_add_default(
-            {(*attribute_names)[i], name_sockets[i]->node().output(0).data_type()})
-        .append(&name_sockets[i]->node());
+    attribute_nodes_by_name_and_type.add(
+        {(*attribute_names)[i], name_sockets[i]->node().output(0).data_type()},
+        &name_sockets[i]->node());
   }
 
   Map<const fn::MFOutputSocket *, std::string> attribute_inputs;
@@ -203,7 +225,8 @@ class ParticleFunctionForce : public ParticleForce {
     IndexMask mask = context.particle_chunk().index_mask();
     MutableSpan<float3> r_combined_force = context.force_dst();
 
-    ParticleFunctionEvaluator evaluator{particle_fn_, context.particle_chunk()};
+    ParticleFunctionEvaluator evaluator{
+        particle_fn_, context.solve_context(), context.particle_chunk()};
     evaluator.compute();
     fn::VSpan<float3> forces = evaluator.get<float3>(0, "Force");
 
@@ -213,11 +236,11 @@ class ParticleFunctionForce : public ParticleForce {
   }
 };
 
-static Vector<const ParticleForce *> create_forces_for_particle_simulation(
-    const nodes::DNode &simulation_node,
-    nodes::MFNetworkTreeMap &network_map,
-    ResourceCollector &resources,
-    DummyDataSources &data_sources)
+static void create_forces_for_particle_simulation(const nodes::DNode &simulation_node,
+                                                  nodes::MFNetworkTreeMap &network_map,
+                                                  ResourceCollector &resources,
+                                                  DummyDataSources &data_sources,
+                                                  SimulationInfluences &r_influences)
 {
   Vector<const ParticleForce *> forces;
   for (const nodes::DOutputSocket *origin_socket :
@@ -240,7 +263,9 @@ static Vector<const ParticleForce *> create_forces_for_particle_simulation(
     const ParticleForce &force = resources.construct<ParticleFunctionForce>(AT, *particle_fn);
     forces.append(&force);
   }
-  return forces;
+
+  std::string particle_name = dnode_to_path(simulation_node);
+  r_influences.particle_forces.add_multiple(std::move(particle_name), forces);
 }
 
 static void collect_forces(nodes::MFNetworkTreeMap &network_map,
@@ -249,53 +274,70 @@ static void collect_forces(nodes::MFNetworkTreeMap &network_map,
                            SimulationInfluences &r_influences)
 {
   for (const nodes::DNode *dnode : get_particle_simulation_nodes(network_map.tree())) {
-    std::string name = dnode_to_path(*dnode);
-    Vector<const ParticleForce *> forces = create_forces_for_particle_simulation(
-        *dnode, network_map, resources, data_sources);
-    r_influences.particle_forces.add_new(std::move(name), std::move(forces));
+    create_forces_for_particle_simulation(
+        *dnode, network_map, resources, data_sources, r_influences);
   }
 }
 
-class MyBasicEmitter : public ParticleEmitter {
- private:
-  std::string name_;
-
- public:
-  MyBasicEmitter(std::string name) : name_(std::move(name))
-  {
-  }
-
-  void emit(ParticleEmitterContext &context) const override
-  {
-    ParticleAllocator *allocator = context.try_get_particle_allocator(name_);
-    if (allocator == nullptr) {
-      return;
-    }
-
-    fn::MutableAttributesRef attributes = allocator->allocate(10);
-    RandomNumberGenerator rng{(uint32_t)context.simulation_time_interval().start() ^
-                              (uint32_t)DefaultHash<std::string>{}(name_)};
-
-    MutableSpan<float3> positions = attributes.get<float3>("Position");
-    MutableSpan<float3> velocities = attributes.get<float3>("Velocity");
-    MutableSpan<float> birth_times = attributes.get<float>("Birth Time");
-
-    for (int i : IndexRange(attributes.size())) {
-      positions[i] = rng.get_unit_float3();
-      velocities[i] = rng.get_unit_float3();
-      birth_times[i] = context.simulation_time_interval().start();
+static Vector<const nodes::DNode *> find_linked_particle_simulations(
+    const nodes::DOutputSocket &output_socket)
+{
+  Vector<const nodes::DNode *> simulation_nodes;
+  for (const nodes::DInputSocket *target_socket : output_socket.linked_sockets()) {
+    if (target_socket->node().idname() == "SimulationNodeParticleSimulation") {
+      simulation_nodes.append(&target_socket->node());
     }
   }
-};
+  return simulation_nodes;
+}
+
+static ParticleEmitter *create_particle_emitter(const nodes::DNode &dnode,
+                                                ResourceCollector &resources,
+                                                nodes::MFNetworkTreeMap &network_map,
+                                                RequiredStates &r_required_states)
+{
+  Vector<const nodes::DNode *> simulation_dnodes = find_linked_particle_simulations(
+      dnode.output(0));
+  if (simulation_dnodes.size() == 0) {
+    return nullptr;
+  }
+
+  Array<std::string> names{simulation_dnodes.size()};
+  for (int i : simulation_dnodes.index_range()) {
+    names[i] = dnode_to_path(*simulation_dnodes[i]);
+  }
+
+  Array<const fn::MFInputSocket *> input_sockets{dnode.inputs().size()};
+  for (int i : input_sockets.index_range()) {
+    input_sockets[i] = &network_map.lookup_dummy(dnode.input(i));
+  }
+
+  if (network_map.network().have_dummy_or_unlinked_dependencies(input_sockets)) {
+    return nullptr;
+  }
+
+  fn::MultiFunction &inputs_fn = resources.construct<fn::MFNetworkEvaluator>(
+      AT, Span<const fn::MFOutputSocket *>(), input_sockets.as_span());
+
+  std::string own_state_name = dnode_to_path(dnode);
+  r_required_states.add(own_state_name, SIM_TYPE_NAME_PARTICLE_MESH_EMITTER);
+  ParticleEmitter &emitter = resources.construct<ParticleMeshEmitter>(
+      AT, std::move(own_state_name), std::move(names), inputs_fn);
+  return &emitter;
+}
 
 static void collect_emitters(nodes::MFNetworkTreeMap &network_map,
                              ResourceCollector &resources,
-                             SimulationInfluences &r_influences)
+                             SimulationInfluences &r_influences,
+                             RequiredStates &r_required_states)
 {
-  for (const nodes::DNode *dnode : get_particle_simulation_nodes(network_map.tree())) {
-    std::string name = dnode_to_path(*dnode);
-    ParticleEmitter &emitter = resources.construct<MyBasicEmitter>(AT, name);
-    r_influences.particle_emitters.append(&emitter);
+  for (const nodes::DNode *dnode :
+       network_map.tree().nodes_by_type("SimulationNodeParticleMeshEmitter")) {
+    ParticleEmitter *emitter = create_particle_emitter(
+        *dnode, resources, network_map, r_required_states);
+    if (emitter != nullptr) {
+      r_influences.particle_emitters.append(emitter);
+    }
   }
 }
 
@@ -319,7 +361,7 @@ static void prepare_particle_attribute_builders(nodes::MFNetworkTreeMap &network
 void collect_simulation_influences(Simulation &simulation,
                                    ResourceCollector &resources,
                                    SimulationInfluences &r_influences,
-                                   SimulationStatesInfo &r_states_info)
+                                   RequiredStates &r_required_states)
 {
   nodes::NodeTreeRefMap tree_refs;
   const nodes::DerivedNodeTree tree{simulation.nodetree, tree_refs};
@@ -338,10 +380,10 @@ void collect_simulation_influences(Simulation &simulation,
   // WM_clipboard_text_set(network.to_dot().c_str(), false);
 
   collect_forces(network_map, resources, data_sources, r_influences);
-  collect_emitters(network_map, resources, r_influences);
+  collect_emitters(network_map, resources, r_influences, r_required_states);
 
   for (const nodes::DNode *dnode : get_particle_simulation_nodes(tree)) {
-    r_states_info.particle_simulation_names.add(dnode_to_path(*dnode));
+    r_required_states.add(dnode_to_path(*dnode), SIM_TYPE_NAME_PARTICLE_SIMULATION);
   }
 }
 
