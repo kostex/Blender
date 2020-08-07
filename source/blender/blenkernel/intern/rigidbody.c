@@ -551,7 +551,7 @@ static rbCollisionShape *rigidbody_validate_sim_shape_helper(RigidBodyWorld *rbw
       new_shape = rigidbody_get_shape_trimesh_from_mesh(ob);
       break;
     case RB_SHAPE_COMPOUND:
-      new_shape = RB_shape_new_compound(radius);
+      new_shape = RB_shape_new_compound();
       rbCollisionShape *childShape = NULL;
       float loc[3], rot[4];
       float mat[4][4];
@@ -2075,7 +2075,7 @@ void BKE_rigidbody_do_simulation(Depsgraph *depsgraph, Scene *scene, float ctime
     return;
   }
   /* make sure we don't go out of cache frame range */
-  else if (ctime > endframe) {
+  if (ctime > endframe) {
     ctime = endframe;
   }
 
@@ -2083,7 +2083,7 @@ void BKE_rigidbody_do_simulation(Depsgraph *depsgraph, Scene *scene, float ctime
   if (rbw->shared->physics_world == NULL && !(cache->flag & PTCACHE_BAKED)) {
     return;
   }
-  else if (rbw->objects == NULL) {
+  if (rbw->objects == NULL) {
     rigidbody_update_ob_array(rbw);
   }
 
