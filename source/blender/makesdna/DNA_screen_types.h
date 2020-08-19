@@ -68,8 +68,6 @@ typedef struct bScreen {
   /** User-setting for which editors get redrawn during anim playback. */
   short redraws_flag;
 
-  char statusbar_info[256];
-
   /** Temp screen in a temp window, don't save (like user prefs). */
   char temp;
   /** Temp screen for image render display or fileselect. */
@@ -644,6 +642,11 @@ typedef enum eRegionType {
 
 /* Region supports panel tabs (categories). */
 #define RGN_TYPE_HAS_CATEGORY_MASK (1 << RGN_TYPE_UI)
+
+/* Check for any kind of header region. */
+#define RGN_TYPE_IS_HEADER_ANY(regiontype) \
+  (((1 << (regiontype)) & \
+    ((1 << RGN_TYPE_HEADER) | 1 << (RGN_TYPE_TOOL_HEADER) | (1 << RGN_TYPE_FOOTER))) != 0)
 
 /** #ARegion.alignment */
 enum {
