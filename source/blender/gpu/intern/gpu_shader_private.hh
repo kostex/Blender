@@ -64,8 +64,13 @@ class Shader {
 
   virtual void vertformat_from_shader(GPUVertFormat *) const = 0;
 
+  inline const char *const name_get(void) const
+  {
+    return name;
+  };
+
  protected:
-  void print_errors(Span<const char *> sources, char *log);
+  void print_errors(Span<const char *> sources, char *log, const char *stage);
 };
 
 }  // namespace gpu
