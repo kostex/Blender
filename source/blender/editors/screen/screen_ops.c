@@ -89,7 +89,7 @@
 #include "UI_resources.h"
 #include "UI_view2d.h"
 
-#include "GPU_extensions.h"
+#include "GPU_capabilities.h"
 
 #include "screen_intern.h" /* own module include */
 
@@ -481,7 +481,7 @@ bool ED_operator_posemode(bContext *C)
   if (obact && !(obact->mode & OB_MODE_EDIT)) {
     Object *obpose;
     if ((obpose = BKE_object_pose_armature_get(obact))) {
-      if ((obact == obpose) || (obact->mode & OB_MODE_WEIGHT_PAINT)) {
+      if ((obact == obpose) || (obact->mode & OB_MODE_ALL_WEIGHT_PAINT)) {
         return 1;
       }
     }
@@ -4475,7 +4475,7 @@ static int screen_animation_step(bContext *C, wmOperator *UNUSED(op), const wmEv
         scene->r.cfra++;
       }
       else {
-        scene->r.cfra = max_ii(scene->r.cfra, newfra + 0.5);
+        scene->r.cfra = max_ii(scene->r.cfra, round(newfra));
       }
 
 #ifdef PROFILE_AUDIO_SYNCH
