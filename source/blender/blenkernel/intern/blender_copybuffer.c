@@ -73,7 +73,7 @@ void BKE_copybuffer_tag_ID(ID *id)
 bool BKE_copybuffer_save(Main *bmain_src, const char *filename, ReportList *reports)
 {
   const int write_flags = 0;
-  const eBLO_WritePathRemap remap_mode = BLO_WRITE_PATH_REMAP_RELATIVE;
+  const eBLO_WritePathRemap remap_mode = BLO_WRITE_PATH_REMAP_NONE;
 
   bool retval = BKE_blendfile_write_partial(bmain_src, filename, write_flags, remap_mode, reports);
 

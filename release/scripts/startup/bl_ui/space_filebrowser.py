@@ -370,7 +370,7 @@ class FILEBROWSER_PT_directory_path(Panel):
         subsubrow.operator_context = 'EXEC_DEFAULT'
         subsubrow.operator("file.directory_new", icon='NEWFOLDER', text="")
         subsubrow.prop(context.space_data.params,"display_type",expand=True,text="")
-        subsubrow.prop(context.space_data.params,"sort_method",expand=True,text="")
+        subsubrow.prop(context.space_data.params,"sort_method",expand=True,text="Sort")
         subsubrow.prop(context.space_data.params, "use_sort_invert",text="RSort")
         subrow.template_file_select_path(params)
 

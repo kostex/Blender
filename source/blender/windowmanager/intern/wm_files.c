@@ -1746,7 +1746,7 @@ static int wm_homefile_write_exec(bContext *C, wmOperator *op)
                      filepath,
                      fileflags,
                      &(const struct BlendFileWriteParams){
-                         .remap_mode = BLO_WRITE_PATH_REMAP_RELATIVE,
+                         .remap_mode = BLO_WRITE_PATH_REMAP_NONE,
                      },
                      op->reports) == 0) {
     printf("fail\n");
@@ -2671,7 +2671,7 @@ static int wm_save_as_mainfile_exec(bContext *C, wmOperator *op)
    * existing relative paths is a good default.
    * Users can manually make their paths relative & absolute if they wish. */
   const eBLO_WritePathRemap remap_mode = RNA_boolean_get(op->ptr, "relative_remap") ?
-                                             BLO_WRITE_PATH_REMAP_RELATIVE :
+                                             BLO_WRITE_PATH_REMAP_NONE :
                                              BLO_WRITE_PATH_REMAP_NONE;
   save_set_compress(op);
 
