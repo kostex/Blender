@@ -2572,7 +2572,9 @@ static int object_convert_exec(bContext *C, wmOperator *op)
 
       if (newob->type == OB_CURVE) {
         BKE_object_free_modifiers(newob, 0); /* after derivedmesh calls! */
-        ED_rigidbody_object_remove(bmain, scene, newob);
+        if (newob->rigidbody_object != NULL) {
+          ED_rigidbody_object_remove(bmain, scene, newob);
+        }
       }
     }
     else if (ob->type == OB_MESH && target == OB_GPENCIL) {
@@ -2594,20 +2596,18 @@ static int object_convert_exec(bContext *C, wmOperator *op)
       bGPdata *gpd = (bGPdata *)ob_gpencil->data;
       gpd->draw_mode = GP_DRAWMODE_3D;
 
-      BKE_gpencil_convert_mesh(bmain,
-                               depsgraph,
-                               scene,
-                               ob_gpencil,
-                               ob,
-                               angle,
-                               thickness,
-                               offset,
-                               matrix,
-                               0,
-                               use_seams,
-                               use_faces,
-                               false);
-      gpencilConverted = true;
+      gpencilConverted |= BKE_gpencil_convert_mesh(bmain,
+                                                   depsgraph,
+                                                   scene,
+                                                   ob_gpencil,
+                                                   ob,
+                                                   angle,
+                                                   thickness,
+                                                   offset,
+                                                   matrix,
+                                                   0,
+                                                   use_seams,
+                                                   use_faces);
 
       /* Remove unused materials. */
       int actcol = ob_gpencil->actcol;
