@@ -2606,9 +2606,10 @@ static void rna_FileBrowser_FSMenu_active_range(PointerRNA *UNUSED(ptr),
   *max = *softmax = ED_fsmenu_get_nentries(fsmenu, category) - 1;
 }
 
-static void rna_FileBrowser_FSMenu_active_update(struct bContext *C, PointerRNA *UNUSED(ptr))
+static void rna_FileBrowser_FSMenu_active_update(struct bContext *C, PointerRNA *ptr)
 {
-  ED_file_change_dir(C);
+  ScrArea *area = rna_area_from_space(ptr);
+  ED_file_change_dir_ex(C, (bScreen *)ptr->owner_id, area);
 }
 
 static int rna_FileBrowser_FSMenuSystem_active_get(PointerRNA *ptr)
@@ -2971,10 +2972,10 @@ static void rna_def_space_outliner(BlenderRNA *brna)
        "View Layer",
        "Display collections and objects in the view layer"},
       {SO_SEQUENCE,
-         "SEQUENCE",
-         ICON_SEQUENCE,
-         "Video Sequencer",
-         "Display data belonging to the Video Sequencer"},
+       "SEQUENCE",
+       ICON_SEQUENCE,
+       "Video Sequencer",
+       "Display data belonging to the Video Sequencer"},
       {SO_LIBRARIES,
        "LIBRARIES",
        ICON_FILE_BLEND,
