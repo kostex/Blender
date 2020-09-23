@@ -2769,42 +2769,37 @@ static void tselem_draw_icon(uiBlock *block,
                              const bool is_clickable)
 {
   TreeElementIcon data = tree_element_get_icon(tselem, te);
-
   if (data.icon == 0) {
     return;
   }
 
-  if (outliner_is_collection_tree_element(te)) {
-    Collection *collection = outliner_collection_from_tree_element(te);
+  const bool is_collection = outliner_is_collection_tree_element(te);
 
+  /* Collection colors and icons covered by restrict buttons. */
+  if (!is_clickable || x >= xmax || is_collection) {
     /* placement of icons, copied from interface_widgets.c */
     float aspect = (0.8f * UI_UNIT_Y) / ICON_DEFAULT_HEIGHT;
     x += 2.0f * aspect;
     y += 2.0f * aspect;
-    if (collection->color_tag != COLLECTION_COLOR_NONE) {
-      bTheme *btheme = UI_GetTheme();
-      UI_icon_draw_ex(x,
-                      y,
-                      data.icon,
-                      U.inv_dpi_fac,
-                      alpha,
-                      0.0f,
-                      btheme->collection_color[collection->color_tag].color,
-                      true);
+
+    if (is_collection) {
+      Collection *collection = outliner_collection_from_tree_element(te);
+      if (collection->color_tag != COLLECTION_COLOR_NONE) {
+        bTheme *btheme = UI_GetTheme();
+        UI_icon_draw_ex(x,
+                        y,
+                        data.icon,
+                        U.inv_dpi_fac,
+                        alpha,
+                        0.0f,
+                        btheme->collection_color[collection->color_tag].color,
+                        true);
+        return;
+      }
     }
-    else {
-      UI_icon_draw_ex(x, y, data.icon, U.inv_dpi_fac, alpha, 0.0f, NULL, true);
-    }
-  }
-  /* Icon is covered by restrict buttons */
-  else if (!is_clickable || x >= xmax) {
+
     /* Reduce alpha to match icon buttons */
     alpha *= 0.8f;
-
-    /* placement of icons, copied from interface_widgets.c */
-    float aspect = (0.8f * UI_UNIT_Y) / ICON_DEFAULT_HEIGHT;
-    x += 2.0f * aspect;
-    y += 2.0f * aspect;
 
     /* restrict column clip... it has been coded by simply overdrawing,
      * doesn't work for buttons */
@@ -3360,7 +3355,6 @@ static void outliner_draw_hierarchy_lines_recursive(uint pos,
 {
   bTheme *btheme = UI_GetTheme();
   int y = *starty;
-  short color_tag = COLLECTION_COLOR_NONE;
 
   /* Small vertical padding */
   const short line_padding = UI_UNIT_Y / 4.0f;
@@ -3371,8 +3365,9 @@ static void outliner_draw_hierarchy_lines_recursive(uint pos,
     TreeStoreElem *tselem = TREESTORE(te);
     draw_hierarchy_line = false;
     *starty -= UI_UNIT_Y;
+    short color_tag = COLLECTION_COLOR_NONE;
 
-    /* Only draw hierarchy lines for open collections. */
+    /* Only draw hierarchy lines for expanded collections and objects with children. */
     if (TSELEM_OPEN(tselem, space_outliner) && !BLI_listbase_is_empty(&te->subtree)) {
       if (tselem->type == TSE_LAYER_COLLECTION) {
         draw_hierarchy_line = true;
