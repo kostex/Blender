@@ -1008,12 +1008,17 @@ def km_view3d(params):
         ("view3d.localview", {"type": 'MOUSESMARTZOOM', "value": 'ANY'}, None),
         ("view3d.localview_remove_from", {"type": 'M', "value": 'PRESS'}, None),
         # Navigation.
+        ("view3d.rotate", {"type": 'MOUSEROTATE', "value": 'ANY'}, None),
         *((
             ("view3d.rotate", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "shift": True}, None),
             ("view3d.move", {"type": 'MIDDLEMOUSE', "value": 'PRESS'}, None),
+            ("view3d.rotate", {"type": 'TRACKPADPAN', "value": 'ANY', "shift": True}, None),
+            ("view3d.move", {"type": 'TRACKPADPAN', "value": 'ANY'}, None),
         ) if params.use_v3d_mmb_pan else (
             ("view3d.rotate", {"type": 'MIDDLEMOUSE', "value": 'PRESS'}, None),
             ("view3d.move", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "shift": True}, None),
+            ("view3d.rotate", {"type": 'TRACKPADPAN', "value": 'ANY'}, None),
+            ("view3d.move", {"type": 'TRACKPADPAN', "value": 'ANY', "shift": True}, None),
         )),
         ("view3d.zoom", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "ctrl": True}, None),
         ("view3d.dolly", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "shift": True, "ctrl": True}, None),
@@ -1022,9 +1027,6 @@ def km_view3d(params):
         ("view3d.view_selected", {"type": 'NUMPAD_PERIOD', "value": 'PRESS'},
          {"properties": [("use_all_regions", False)]}),
         ("view3d.smoothview", {"type": 'TIMER1', "value": 'ANY', "any": True}, None),
-        ("view3d.rotate", {"type": 'TRACKPADPAN', "value": 'ANY'}, None),
-        ("view3d.rotate", {"type": 'MOUSEROTATE', "value": 'ANY'}, None),
-        ("view3d.move", {"type": 'TRACKPADPAN', "value": 'ANY', "shift": True}, None),
         ("view3d.zoom", {"type": 'TRACKPADZOOM', "value": 'ANY'}, None),
         ("view3d.zoom", {"type": 'TRACKPADPAN', "value": 'ANY', "ctrl": True}, None),
         ("view3d.zoom", {"type": 'NUMPAD_PLUS', "value": 'PRESS'},
@@ -4349,8 +4351,8 @@ def km_sculpt(params):
     )
 
     items.extend([
-        # Switch Object
-        ("object.switch_object", {"type": 'D', "value": 'PRESS'}, None),
+        # Switch Object (release to avoid conflict with grease pencil drawing).
+        ("object.switch_object", {"type": 'D', "value": 'RELEASE'}, None),
         # Brush strokes
         ("sculpt.brush_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS'},
          {"properties": [("mode", 'NORMAL')]}),
@@ -4467,8 +4469,8 @@ def km_mesh(params):
     )
 
     items.extend([
-        #Switch Object
-        ("object.switch_object", {"type": 'D', "value": 'PRESS'}, None),
+        # Switch Object (release to avoid conflict with grease pencil drawing).
+        ("object.switch_object", {"type": 'D', "value": 'RELEASE'}, None),
         # Tools.
         ("mesh.loopcut_slide", {"type": 'R', "value": 'PRESS', "ctrl": True},
          {"properties": [("TRANSFORM_OT_edge_slide", [("release_confirm", False)],)]}),
@@ -5011,7 +5013,7 @@ def km_transform_modal_map(_params):
         ("AUTOIK_CHAIN_LEN_DOWN", {"type": 'WHEELUPMOUSE', "value": 'PRESS', "shift": True}, None),
         ("INSERTOFS_TOGGLE_DIR", {"type": 'T', "value": 'PRESS', "repeat": False}, None),
         ("AUTOCONSTRAIN", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "repeat": False}, None),
-        ("AUTOCONSTRAIN", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "repeat": False, "shift": True}, None),
+        ("AUTOCONSTRAINPLANE", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "repeat": False, "shift": True}, None),
     ])
 
     return keymap
