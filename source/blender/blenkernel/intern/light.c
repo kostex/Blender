@@ -213,18 +213,9 @@ Light *BKE_light_add(Main *bmain, const char *name)
 {
   Light *la;
 
-  la = BKE_libblock_alloc(bmain, ID_LA, name, 0);
-
-  light_init_data(&la->id);
+  la = BKE_id_new(bmain, ID_LA, name);
 
   return la;
-}
-
-Light *BKE_light_copy(Main *bmain, const Light *la)
-{
-  Light *la_copy;
-  BKE_id_copy(bmain, &la->id, (ID **)&la_copy);
-  return la_copy;
 }
 
 void BKE_light_eval(struct Depsgraph *depsgraph, Light *la)

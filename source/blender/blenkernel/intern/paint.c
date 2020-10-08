@@ -672,16 +672,9 @@ PaintCurve *BKE_paint_curve_add(Main *bmain, const char *name)
 {
   PaintCurve *pc;
 
-  pc = BKE_libblock_alloc(bmain, ID_PC, name, 0);
+  pc = BKE_id_new(bmain, ID_PC, name);
 
   return pc;
-}
-
-PaintCurve *BKE_paint_curve_copy(Main *bmain, const PaintCurve *pc)
-{
-  PaintCurve *pc_copy;
-  BKE_id_copy(bmain, &pc->id, (ID **)&pc_copy);
-  return pc_copy;
 }
 
 Palette *BKE_paint_palette(Paint *p)
@@ -739,13 +732,6 @@ Palette *BKE_palette_add(Main *bmain, const char *name)
 {
   Palette *palette = BKE_id_new(bmain, ID_PAL, name);
   return palette;
-}
-
-Palette *BKE_palette_copy(Main *bmain, const Palette *palette)
-{
-  Palette *palette_copy;
-  BKE_id_copy(bmain, &palette->id, (ID **)&palette_copy);
-  return palette_copy;
 }
 
 PaletteColor *BKE_palette_color_add(Palette *palette)

@@ -383,9 +383,7 @@ Tex *BKE_texture_add(Main *bmain, const char *name)
 {
   Tex *tex;
 
-  tex = BKE_libblock_alloc(bmain, ID_TE, name, 0);
-
-  texture_init_data(&tex->id);
+  tex = BKE_id_new(bmain, ID_TE, name);
 
   return tex;
 }
@@ -451,15 +449,6 @@ MTex *BKE_texture_mtex_add_id(ID *id, int slot)
   mtex_ar[slot] = BKE_texture_mtex_add();
 
   return mtex_ar[slot];
-}
-
-/* ------------------------------------------------------------------------- */
-
-Tex *BKE_texture_copy(Main *bmain, const Tex *tex)
-{
-  Tex *tex_copy;
-  BKE_id_copy(bmain, &tex->id, (ID **)&tex_copy);
-  return tex_copy;
 }
 
 /* ------------------------------------------------------------------------- */

@@ -170,7 +170,7 @@ static void brush_make_local(Main *bmain, ID *id, const int flags)
       id_fake_user_set(&brush->id);
     }
     else {
-      Brush *brush_new = BKE_brush_copy(bmain, brush); /* Ensures FAKE_USER is set */
+      Brush *brush_new = (Brush *)BKE_id_copy(bmain, &brush->id); /* Ensures FAKE_USER is set */
 
       brush_new->id.us = 0;
 
@@ -455,9 +455,7 @@ Brush *BKE_brush_add(Main *bmain, const char *name, const eObjectMode ob_mode)
 {
   Brush *brush;
 
-  brush = BKE_libblock_alloc(bmain, ID_BR, name, 0);
-
-  brush_init_data(&brush->id);
+  brush = BKE_id_new(bmain, ID_BR, name);
 
   brush->ob_mode = ob_mode;
 
@@ -1529,13 +1527,6 @@ struct Brush *BKE_brush_first_search(struct Main *bmain, const eObjectMode ob_mo
     }
   }
   return NULL;
-}
-
-Brush *BKE_brush_copy(Main *bmain, const Brush *brush)
-{
-  Brush *brush_copy;
-  BKE_id_copy(bmain, &brush->id, (ID **)&brush_copy);
-  return brush_copy;
 }
 
 void BKE_brush_debug_print_state(Brush *br)

@@ -860,9 +860,7 @@ Mesh *BKE_mesh_add(Main *bmain, const char *name)
 {
   Mesh *me;
 
-  me = BKE_libblock_alloc(bmain, ID_ME, name, 0);
-
-  mesh_init_data(&me->id);
+  me = BKE_id_new(bmain, ID_ME, name);
 
   return me;
 }
@@ -1013,16 +1011,8 @@ Mesh *BKE_mesh_copy_for_eval(struct Mesh *source, bool reference)
     flags |= LIB_ID_COPY_CD_REFERENCE;
   }
 
-  Mesh *result;
-  BKE_id_copy_ex(NULL, &source->id, (ID **)&result, flags);
+  Mesh *result = (Mesh *)BKE_id_copy_ex(NULL, &source->id, NULL, flags);
   return result;
-}
-
-Mesh *BKE_mesh_copy(Main *bmain, const Mesh *me)
-{
-  Mesh *me_copy;
-  BKE_id_copy(bmain, &me->id, (ID **)&me_copy);
-  return me_copy;
 }
 
 BMesh *BKE_mesh_to_bmesh_ex(const Mesh *me,

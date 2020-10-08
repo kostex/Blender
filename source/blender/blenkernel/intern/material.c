@@ -297,9 +297,7 @@ Material *BKE_material_add(Main *bmain, const char *name)
 {
   Material *ma;
 
-  ma = BKE_libblock_alloc(bmain, ID_MA, name, 0);
-
-  material_init_data(&ma->id);
+  ma = BKE_id_new(bmain, ID_MA, name);
 
   return ma;
 }
@@ -315,13 +313,6 @@ Material *BKE_gpencil_material_add(Main *bmain, const char *name)
     BKE_gpencil_material_attr_init(ma);
   }
   return ma;
-}
-
-Material *BKE_material_copy(Main *bmain, const Material *ma)
-{
-  Material *ma_copy;
-  BKE_id_copy(bmain, &ma->id, (ID **)&ma_copy);
-  return ma_copy;
 }
 
 Material ***BKE_object_material_array_p(Object *ob)

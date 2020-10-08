@@ -287,11 +287,9 @@ Text *BKE_text_add(Main *bmain, const char *name)
 {
   Text *ta;
 
-  ta = BKE_libblock_alloc(bmain, ID_TXT, name, 0);
+  ta = BKE_id_new(bmain, ID_TXT, name);
   /* Texts always have 'real' user (see also read code). */
   id_us_ensure_real(&ta->id);
-
-  text_init_data(&ta->id);
 
   return ta;
 }
@@ -514,13 +512,6 @@ Text *BKE_text_load_ex(Main *bmain, const char *file, const char *relpath, const
 Text *BKE_text_load(Main *bmain, const char *file, const char *relpath)
 {
   return BKE_text_load_ex(bmain, file, relpath, false);
-}
-
-Text *BKE_text_copy(Main *bmain, const Text *ta)
-{
-  Text *ta_copy;
-  BKE_id_copy(bmain, &ta->id, (ID **)&ta_copy);
-  return ta_copy;
 }
 
 void BKE_text_clear(Text *text) /* called directly from rna */
