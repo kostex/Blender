@@ -440,7 +440,6 @@ ListBase *BKE_curve_editNurbs_get(Curve *cu)
 
 short BKE_curve_type_get(const Curve *cu)
 {
-  Nurb *nu;
   int type = cu->type;
 
   if (cu->vfont) {
@@ -450,7 +449,7 @@ short BKE_curve_type_get(const Curve *cu)
   if (!cu->type) {
     type = OB_CURVE;
 
-    for (nu = cu->nurb.first; nu; nu = nu->next) {
+    LISTBASE_FOREACH (Nurb *, nu, &cu->nurb) {
       if (nu->pntsv > 1) {
         type = OB_SURF;
       }
@@ -5278,8 +5277,7 @@ void BKE_curve_transform_ex(Curve *cu,
   }
 
   if (do_keys && cu->key) {
-    KeyBlock *kb;
-    for (kb = cu->key->block.first; kb; kb = kb->next) {
+    LISTBASE_FOREACH (KeyBlock *, kb, &cu->key->block) {
       float *fp = kb->data;
       int n = kb->totelem;
 
@@ -5439,9 +5437,8 @@ bool BKE_curve_material_index_validate(Curve *cu)
     }
   }
   else {
-    Nurb *nu;
     const int max_idx = max_ii(0, cu->totcol - 1);
-    for (nu = cu->nurb.first; nu; nu = nu->next) {
+    LISTBASE_FOREACH (Nurb *, nu, &cu->nurb) {
       if (nu->mat_nr > max_idx) {
         nu->mat_nr = 0;
         is_valid = false;
@@ -5507,12 +5504,12 @@ void BKE_curve_material_remap(Curve *cu, const unsigned int *remap, unsigned int
 void BKE_curve_smooth_flag_set(Curve *cu, const bool use_smooth)
 {
   if (use_smooth) {
-    for (Nurb *nu = cu->nurb.first; nu; nu = nu->next) {
+    LISTBASE_FOREACH (Nurb *, nu, &cu->nurb) {
       nu->flag |= CU_SMOOTH;
     }
   }
   else {
-    for (Nurb *nu = cu->nurb.first; nu; nu = nu->next) {
+    LISTBASE_FOREACH (Nurb *, nu, &cu->nurb) {
       nu->flag &= ~CU_SMOOTH;
     }
   }
