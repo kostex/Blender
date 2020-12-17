@@ -25,15 +25,15 @@
 
 #include "DNA_ID.h"
 #include "DNA_listBase.h"
-#include "DNA_scene_types.h"
-#include "DNA_texture_types.h"
-#include "DNA_vec_types.h"
+#include "DNA_scene_types.h" /* for #ImageFormatData */
+#include "DNA_vec_types.h"   /* for #rctf */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct AnimData;
+struct Collection;
 struct ID;
 struct Image;
 struct ListBase;
@@ -44,7 +44,6 @@ struct bNodePreview;
 struct bNodeTreeExec;
 struct bNodeType;
 struct uiBlock;
-struct Collection;
 
 #define NODE_MAXSTR 64
 
@@ -1052,10 +1051,20 @@ typedef struct NodeSunBeams {
   float ray_length;
 } NodeSunBeams;
 
+typedef struct CryptomatteEntry {
+  struct CryptomatteEntry *next, *prev;
+  float encoded_hash;
+  /** MAX_NAME. */
+  char name[64];
+  char _pad[4];
+} CryptomatteEntry;
+
 typedef struct NodeCryptomatte {
   float add[3];
   float remove[3];
-  char *matte_id;
+  char *matte_id DNA_DEPRECATED;
+  /* Contains `CryptomatteEntry`. */
+  ListBase entries;
   int num_inputs;
   char _pad[4];
 } NodeCryptomatte;
@@ -1074,6 +1083,10 @@ typedef struct NodeAttributeMix {
   uint8_t input_type_a;
   uint8_t input_type_b;
 } NodeAttributeMix;
+
+typedef struct NodeAttributeColorRamp {
+  ColorBand color_ramp;
+} NodeAttributeColorRamp;
 
 /* script node mode */
 #define NODE_SCRIPT_INTERNAL 0
@@ -1491,6 +1504,11 @@ typedef enum GeometryNodeAttributeInputMode {
   GEO_NODE_ATTRIBUTE_INPUT_VECTOR = 2,
   GEO_NODE_ATTRIBUTE_INPUT_COLOR = 3,
 } GeometryNodeAttributeInputMode;
+
+typedef enum GeometryNodePointDistributeMethod {
+  GEO_NODE_POINT_DISTRIBUTE_RANDOM = 0,
+  GEO_NODE_POINT_DISTRIBUTE_POISSON = 1,
+} GeometryNodePointDistributeMethod;
 
 #ifdef __cplusplus
 }

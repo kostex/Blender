@@ -37,6 +37,7 @@
 
 #include "BKE_animsys.h"
 #include "BKE_attribute.h"
+#include "BKE_cryptomatte.h"
 #include "BKE_image.h"
 #include "BKE_node.h"
 #include "BKE_texture.h"
@@ -448,6 +449,20 @@ static const EnumPropertyItem rna_node_geometry_attribute_input_type_items[] = {
     {GEO_NODE_ATTRIBUTE_INPUT_FLOAT, "FLOAT", 0, "Float", ""},
     {GEO_NODE_ATTRIBUTE_INPUT_VECTOR, "VECTOR", 0, "Vector", ""},
     {GEO_NODE_ATTRIBUTE_INPUT_COLOR, "COLOR", 0, "Color", ""},
+    {0, NULL, 0, NULL, NULL},
+};
+
+static const EnumPropertyItem rna_node_geometry_point_distribute_method_items[] = {
+    {GEO_NODE_POINT_DISTRIBUTE_RANDOM,
+     "RANDOM",
+     0,
+     "Random",
+     "Distribute points randomly on the surface"},
+    {GEO_NODE_POINT_DISTRIBUTE_POISSON,
+     "POISSON",
+     0,
+     "Poisson Disk",
+     "Project points on the surface evenly with a Poisson disk distribution"},
     {0, NULL, 0, NULL, NULL},
 };
 
@@ -1875,7 +1890,7 @@ static const EnumPropertyItem *itemf_function_check(
 
 static bool attribute_random_type_supported(const EnumPropertyItem *item)
 {
-  return ELEM(item->value, CD_PROP_FLOAT, CD_PROP_FLOAT3);
+  return ELEM(item->value, CD_PROP_FLOAT, CD_PROP_FLOAT3, CD_PROP_BOOL);
 }
 static const EnumPropertyItem *rna_GeometryNodeAttributeRandom_type_itemf(
     bContext *UNUSED(C), PointerRNA *UNUSED(ptr), PropertyRNA *UNUSED(prop), bool *r_free)
@@ -1897,7 +1912,7 @@ static const EnumPropertyItem *rna_GeometryNodeAttributeRandom_domain_itemf(
 
 static bool attribute_fill_type_supported(const EnumPropertyItem *item)
 {
-  return ELEM(item->value, CD_PROP_FLOAT, CD_PROP_FLOAT3, CD_PROP_COLOR);
+  return ELEM(item->value, CD_PROP_FLOAT, CD_PROP_FLOAT3, CD_PROP_COLOR, CD_PROP_BOOL);
 }
 static const EnumPropertyItem *rna_GeometryNodeAttributeFill_type_itemf(bContext *UNUSED(C),
                                                                         PointerRNA *UNUSED(ptr),
@@ -3626,33 +3641,26 @@ static void rna_NodeCryptomatte_matte_get(PointerRNA *ptr, char *value)
 {
   bNode *node = (bNode *)ptr->data;
   NodeCryptomatte *nc = node->storage;
-
-  strcpy(value, (nc->matte_id) ? nc->matte_id : "");
+  char *matte_id = BKE_cryptomatte_entries_to_matte_id(nc);
+  strcpy(value, matte_id);
+  MEM_freeN(matte_id);
 }
 
 static int rna_NodeCryptomatte_matte_length(PointerRNA *ptr)
 {
   bNode *node = (bNode *)ptr->data;
   NodeCryptomatte *nc = node->storage;
-
-  return (nc->matte_id) ? strlen(nc->matte_id) : 0;
+  char *matte_id = BKE_cryptomatte_entries_to_matte_id(nc);
+  int result = strlen(matte_id);
+  MEM_freeN(matte_id);
+  return result;
 }
 
 static void rna_NodeCryptomatte_matte_set(PointerRNA *ptr, const char *value)
 {
   bNode *node = (bNode *)ptr->data;
   NodeCryptomatte *nc = node->storage;
-
-  if (nc->matte_id) {
-    MEM_freeN(nc->matte_id);
-  }
-
-  if (value && value[0]) {
-    nc->matte_id = BLI_strdup(value);
-  }
-  else {
-    nc->matte_id = NULL;
-  }
+  BKE_cryptomatte_matte_id_to_entries(NULL, nc, value);
 }
 
 static void rna_NodeCryptomatte_update_add(Main *bmain, Scene *scene, PointerRNA *ptr)
@@ -8205,6 +8213,24 @@ static void def_cmp_sunbeams(StructRNA *srna)
   RNA_def_property_update(prop, NC_NODE | NA_EDITED, "rna_Node_update");
 }
 
+static void def_cmp_cryptomatte_entry(BlenderRNA *brna)
+{
+  StructRNA *srna;
+  PropertyRNA *prop;
+
+  srna = RNA_def_struct(brna, "CryptomatteEntry", NULL);
+  RNA_def_struct_sdna(srna, "CryptomatteEntry");
+
+  prop = RNA_def_property(srna, "encoded_hash", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_clear_flag(prop, PROP_EDITABLE);
+  RNA_def_property_float_sdna(prop, NULL, "encoded_hash");
+
+  prop = RNA_def_property(srna, "name", PROP_STRING, PROP_NONE);
+  RNA_def_property_clear_flag(prop, PROP_EDITABLE);
+  RNA_def_property_ui_text(prop, "Name", "");
+  RNA_def_struct_name_property(srna, prop);
+}
+
 static void def_cmp_cryptomatte(StructRNA *srna)
 {
   PropertyRNA *prop;
@@ -8376,7 +8402,7 @@ static void def_geo_attribute_create_common(StructRNA *srna,
   RNA_def_property_update(prop, NC_NODE | NA_EDITED, "rna_Node_update");
 }
 
-static void def_geo_random_attribute(StructRNA *srna)
+static void def_geo_attribute_randomize(StructRNA *srna)
 {
   def_geo_attribute_create_common(srna,
                                   "rna_GeometryNodeAttributeRandom_type_itemf",
@@ -8469,6 +8495,30 @@ static void def_geo_attribute_mix(StructRNA *srna)
   RNA_def_property_update(prop, NC_NODE | NA_EDITED, "rna_Node_socket_update");
 }
 
+static void def_geo_point_distribute(StructRNA *srna)
+{
+  PropertyRNA *prop;
+
+  prop = RNA_def_property(srna, "distribute_method", PROP_ENUM, PROP_NONE);
+  RNA_def_property_enum_sdna(prop, NULL, "custom1");
+  RNA_def_property_enum_items(prop, rna_node_geometry_point_distribute_method_items);
+  RNA_def_property_enum_default(prop, GEO_NODE_POINT_DISTRIBUTE_RANDOM);
+  RNA_def_property_ui_text(prop, "Distribution Method", "Method to use for scattering points");
+  RNA_def_property_update(prop, NC_NODE | NA_EDITED, "rna_Node_socket_update");
+}
+
+static void def_geo_attribute_color_ramp(StructRNA *srna)
+{
+  PropertyRNA *prop;
+
+  RNA_def_struct_sdna_from(srna, "NodeAttributeColorRamp", "storage");
+
+  prop = RNA_def_property(srna, "color_ramp", PROP_POINTER, PROP_NONE);
+  RNA_def_property_struct_type(prop, "ColorRamp");
+  RNA_def_property_ui_text(prop, "Color Ramp", "");
+  RNA_def_property_update(prop, NC_NODE | NA_EDITED, "rna_Node_update");
+}
+
 /* -------------------------------------------------------------------------- */
 
 static void rna_def_shader_node(BlenderRNA *brna)
@@ -8494,6 +8544,8 @@ static void rna_def_compositor_node(BlenderRNA *brna)
   /* compositor node need_exec flag */
   func = RNA_def_function(srna, "tag_need_exec", "rna_CompositorNode_tag_need_exec");
   RNA_def_function_ui_description(func, "Tag the node for compositor update");
+
+  def_cmp_cryptomatte_entry(brna);
 }
 
 static void rna_def_texture_node(BlenderRNA *brna)

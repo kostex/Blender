@@ -347,11 +347,14 @@ if(UNIX AND NOT APPLE)
 endif()
 
 option(WITH_PYTHON_INSTALL       "Copy system python into the blender install folder" ON)
+
+if((WITH_AUDASPACE AND NOT WITH_SYSTEM_AUDASPACE) OR WITH_MOD_FLUID)
+  option(WITH_PYTHON_NUMPY "Include NumPy in Blender (used by Audaspace and Mantaflow)"  ON)
+endif()
+
 if(WIN32 OR APPLE)
   # Windows and macOS have this bundled with Python libraries.
-elseif(WITH_PYTHON_INSTALL OR (WITH_AUDASPACE AND NOT WITH_SYSTEM_AUDASPACE) OR WITH_MOD_FLUID)
-  option(WITH_PYTHON_NUMPY "Include NumPy in Blender (used by Audaspace and Mantaflow)"  ON)
-
+elseif(WITH_PYTHON_INSTALL OR WITH_PYTHON_NUMPY)
   set(PYTHON_NUMPY_PATH            "" CACHE PATH "Path to python site-packages or dist-packages containing 'numpy' module")
   mark_as_advanced(PYTHON_NUMPY_PATH)
   set(PYTHON_NUMPY_INCLUDE_DIRS    "" CACHE PATH "Path to the include directory of the NumPy module")
@@ -1632,7 +1635,7 @@ if(WITH_PYTHON)
   if(WIN32 OR APPLE)
     # pass, we have this in lib/python/site-packages
   elseif(WITH_PYTHON_INSTALL_REQUESTS)
-    find_python_package(requests)
+    find_python_package(requests "")
   endif()
 endif()
 
