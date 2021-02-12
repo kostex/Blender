@@ -1352,6 +1352,7 @@ static ImBuf *blend_file_thumb(const bContext *C,
                                           IB_rect,
                                           R_ALPHAPREMUL,
                                           NULL,
+                                          true,
                                           NULL,
                                           err_out);
   }
