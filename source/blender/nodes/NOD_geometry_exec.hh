@@ -20,9 +20,12 @@
 
 #include "BKE_attribute_access.hh"
 #include "BKE_geometry_set.hh"
+#include "BKE_geometry_set_instances.hh"
 #include "BKE_persistent_data_handle.hh"
 
 #include "DNA_node_types.h"
+
+#include "NOD_derived_node_tree.hh"
 
 struct Depsgraph;
 
@@ -38,6 +41,7 @@ using bke::Float3ReadAttribute;
 using bke::Float3WriteAttribute;
 using bke::FloatReadAttribute;
 using bke::FloatWriteAttribute;
+using bke::geometry_set_realize_instances;
 using bke::Int32ReadAttribute;
 using bke::Int32WriteAttribute;
 using bke::PersistentDataHandleMap;
@@ -53,7 +57,7 @@ using fn::GValueMap;
 
 class GeoNodeExecParams {
  private:
-  const bNode &node_;
+  const DNode &node_;
   GValueMap<StringRef> &input_values_;
   GValueMap<StringRef> &output_values_;
   const PersistentDataHandleMap &handle_map_;
@@ -61,7 +65,7 @@ class GeoNodeExecParams {
   Depsgraph *depsgraph_;
 
  public:
-  GeoNodeExecParams(const bNode &node,
+  GeoNodeExecParams(const DNode &node,
                     GValueMap<StringRef> &input_values,
                     GValueMap<StringRef> &output_values,
                     const PersistentDataHandleMap &handle_map,
@@ -176,7 +180,7 @@ class GeoNodeExecParams {
    */
   const bNode &node() const
   {
-    return node_;
+    return *node_.bnode();
   }
 
   const PersistentDataHandleMap &handle_map() const
