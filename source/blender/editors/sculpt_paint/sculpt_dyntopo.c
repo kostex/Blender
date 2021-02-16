@@ -430,10 +430,10 @@ static int sculpt_dynamic_topology_toggle_invoke(bContext *C,
     Scene *scene = CTX_data_scene(C);
     enum eDynTopoWarnFlag flag = SCULPT_dynamic_topology_check(scene, ob);
 
-    if (flag) {
-      /* The mesh has customdata that will be lost, let the user confirm this is OK. */
-      return dyntopo_warning_popup(C, op->type, flag);
-    }
+//    if (flag) {
+//      /* The mesh has customdata that will be lost, let the user confirm this is OK. */
+//      return dyntopo_warning_popup(C, op->type, flag);
+//    }
   }
 
   return sculpt_dynamic_topology_toggle_exec(C, op);
