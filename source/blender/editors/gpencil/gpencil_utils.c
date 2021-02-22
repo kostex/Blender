@@ -1856,7 +1856,7 @@ static void gpencil_brush_cursor_draw(bContext *C, int x, int y, void *customdat
   /* default radius and color */
   float color[3] = {1.0f, 1.0f, 1.0f};
   float darkcolor[3];
-  float radius = 3.0f;
+  float radius = 5.0f;
 
   int mval_i[2] = {x, y};
   /* Check if cursor is in drawing region and has valid data-block. */
@@ -1902,7 +1902,7 @@ static void gpencil_brush_cursor_draw(bContext *C, int x, int y, void *customdat
           ((brush->gpencil_settings->flag & GP_BRUSH_STABILIZE_MOUSE) == 0) &&
           ((brush->gpencil_settings->flag & GP_BRUSH_STABILIZE_MOUSE_TEMP) == 0) &&
           (brush->gpencil_tool == GPAINT_TOOL_DRAW)) {
-        radius = 2.0f;
+        radius = 5.0f;
         copy_v3_v3(color, gp_style->stroke_rgba);
       }
       else {
