@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -228,6 +228,7 @@ typedef enum eSpaceButtons_Context {
   BCONTEXT_TOOL = 14,
   BCONTEXT_SHADERFX = 15,
   BCONTEXT_OUTPUT = 16,
+  BCONTEXT_COLLECTION = 17,
 
   /* Keep last. */
   BCONTEXT_TOT,
@@ -625,6 +626,7 @@ typedef enum eSpaceSeq_RegionType {
 typedef enum eSpaceSeq_DrawFlag {
   SEQ_DRAW_BACKDROP = (1 << 0),
   SEQ_DRAW_OFFSET_EXT = (1 << 1),
+  SEQ_DRAW_TRANSFORM_PREVIEW = (1 << 2),
 } eSpaceSeq_DrawFlag;
 
 /* SpaceSeq.flag */
@@ -646,6 +648,7 @@ typedef enum eSpaceSeq_Flag {
   SEQ_SHOW_STRIP_NAME = (1 << 14),
   SEQ_SHOW_STRIP_SOURCE = (1 << 15),
   SEQ_SHOW_STRIP_DURATION = (1 << 16),
+  SEQ_USE_PROXIES = (1 << 17),
 } eSpaceSeq_Flag;
 
 /* SpaceSeq.view */
