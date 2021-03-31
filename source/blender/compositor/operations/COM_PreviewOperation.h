@@ -24,6 +24,8 @@
 #include "DNA_color_types.h"
 #include "DNA_image_types.h"
 
+namespace blender::compositor {
+
 class PreviewOperation : public NodeOperation {
  protected:
   unsigned char *m_outputBuffer;
@@ -61,8 +63,6 @@ class PreviewOperation : public NodeOperation {
   bool determineDependingAreaOfInterest(rcti *input,
                                         ReadBufferOperation *readOperation,
                                         rcti *output) override;
-  bool isPreviewOperation() const override
-  {
-    return true;
-  }
 };
+
+}  // namespace blender::compositor

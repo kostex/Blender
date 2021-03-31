@@ -27,6 +27,8 @@
 
 #include "intern/openexr/openexr_multi.h"
 
+namespace blender::compositor {
+
 /* Writes the image to a single-layer file. */
 class OutputSingleLayerOperation : public NodeOperation {
  protected:
@@ -68,11 +70,6 @@ class OutputSingleLayerOperation : public NodeOperation {
   {
     return CompositorPriority::Low;
   }
-
-  bool isFileOutputOperation() const override
-  {
-    return true;
-  }
 };
 
 /* extra info for OpenEXR layers */
@@ -91,8 +88,6 @@ struct OutputOpenExrLayer {
 /* Writes inputs into OpenEXR multilayer channels. */
 class OutputOpenExrMultiLayerOperation : public NodeOperation {
  protected:
-  typedef std::vector<OutputOpenExrLayer> LayerList;
-
   const Scene *m_scene;
   const RenderData *m_rd;
   const bNodeTree *m_tree;
@@ -100,7 +95,7 @@ class OutputOpenExrMultiLayerOperation : public NodeOperation {
   char m_path[FILE_MAX];
   char m_exr_codec;
   bool m_exr_half_float;
-  LayerList m_layers;
+  blender::Vector<OutputOpenExrLayer> m_layers;
   const char *m_viewName;
 
   StampData *createStampData() const;
@@ -127,11 +122,6 @@ class OutputOpenExrMultiLayerOperation : public NodeOperation {
   {
     return CompositorPriority::Low;
   }
-
-  bool isFileOutputOperation() const override
-  {
-    return true;
-  }
 };
 
 void add_exr_channels(void *exrhandle,
@@ -146,3 +136,5 @@ void free_exr_channels(void *exrhandle,
                        const char *layerName,
                        const DataType datatype);
 int get_datatype_size(DataType datatype);
+
+}  // namespace blender::compositor
