@@ -125,6 +125,7 @@ typedef struct bNodeSocket {
 
   /** Custom dynamic defined label, MAX_NAME. */
   char label[64];
+  char description[64];
 
   /** Cached data from execution. */
   void *cache;
@@ -348,6 +349,8 @@ typedef struct bNode {
  * composite out nodes when editing tree
  */
 #define NODE_DO_OUTPUT_RECALC (1 << 17)
+/* A preview for the data in this node can be displayed in the spreadsheet editor. */
+#define NODE_ACTIVE_PREVIEW (1 << 18)
 
 /* node->update */
 /* XXX NODE_UPDATE is a generic update flag. More fine-grained updates
@@ -1277,10 +1280,9 @@ typedef struct NodeAttributeSeparateXYZ {
 
 typedef struct NodeAttributeConvert {
   /* CustomDataType. */
-  uint8_t data_type;
-  char _pad[1];
+  int8_t data_type;
   /* AttributeDomain. */
-  int16_t domain;
+  int8_t domain;
 } NodeAttributeConvert;
 
 typedef struct NodeGeometryMeshCircle {
@@ -1304,6 +1306,18 @@ typedef struct NodeGeometryMeshLine {
   /* GeometryNodeMeshLineCountMode. */
   uint8_t count_mode;
 } NodeGeometryMeshLine;
+
+typedef struct NodeSwitch {
+  /* NodeSwitch. */
+  uint8_t input_type;
+} NodeSwitch;
+
+typedef struct NodeGeometryAttributeTransfer {
+  /* AttributeDomain. */
+  int8_t domain;
+  /* GeometryNodeAttributeTransferMapMode. */
+  uint8_t mapping;
+} NodeGeometryAttributeTransfer;
 
 /* script node mode */
 #define NODE_SCRIPT_INTERNAL 0
@@ -1798,6 +1812,11 @@ typedef enum GeometryNodeMeshLineCountMode {
   GEO_NODE_MESH_LINE_COUNT_TOTAL = 0,
   GEO_NODE_MESH_LINE_COUNT_RESOLUTION = 1,
 } GeometryNodeMeshLineCountMode;
+
+typedef enum GeometryNodeAttributeTransferMapMode {
+  GEO_NODE_ATTRIBUTE_TRANSFER_NEAREST_FACE_INTERPOLATED = 0,
+  GEO_NODE_ATTRIBUTE_TRANSFER_NEAREST = 1,
+} GeometryNodeAttributeTransferMapMode;
 
 #ifdef __cplusplus
 }

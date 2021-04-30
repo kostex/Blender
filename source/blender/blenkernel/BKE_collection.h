@@ -112,7 +112,9 @@ bool BKE_scene_collections_object_remove(struct Main *bmain,
                                          struct Object *object,
                                          const bool free_us);
 void BKE_collections_object_remove_nulls(struct Main *bmain);
-void BKE_collections_child_remove_nulls(struct Main *bmain, struct Collection *old_collection);
+void BKE_collections_child_remove_nulls(struct Main *bmain,
+                                        struct Collection *parent_collection,
+                                        struct Collection *child_collection);
 
 /* Dependencies. */
 
@@ -226,6 +228,8 @@ void BKE_scene_collections_iterator_end(struct BLI_Iterator *iter);
 void BKE_scene_objects_iterator_begin(struct BLI_Iterator *iter, void *data_in);
 void BKE_scene_objects_iterator_next(struct BLI_Iterator *iter);
 void BKE_scene_objects_iterator_end(struct BLI_Iterator *iter);
+
+struct GSet *BKE_scene_objects_as_gset(struct Scene *scene, struct GSet *objects_gset);
 
 #define FOREACH_SCENE_COLLECTION_BEGIN(scene, _instance) \
   ITER_BEGIN (BKE_scene_collections_iterator_begin, \

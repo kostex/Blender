@@ -491,6 +491,11 @@ enum {
    * Note that this also applies to shapekeys, even though they are not 100% embedded data...
    */
   LIB_EMBEDDED_DATA_LIB_OVERRIDE = 1 << 12,
+  /**
+   * The override data-block appears to not be needed anymore after resync with linked data, but it
+   * was kept around (because e.g. detected as user-edited).
+   */
+  LIB_LIB_OVERRIDE_RESYNC_LEFTOVER = 1 << 13,
 };
 
 /**
@@ -586,14 +591,16 @@ typedef enum IDRecalcFlag {
   /* ** Object transformation changed. ** */
   ID_RECALC_TRANSFORM = (1 << 0),
 
-  /* ** Object geometry changed. **
+  /* ** Geometry changed. **
    *
    * When object of armature type gets tagged with this flag, its pose is
    * re-evaluated.
    * When object of other type is tagged with this flag it makes the modifier
    * stack to be re-evaluated.
    * When object data type (mesh, curve, ...) gets tagged with this flag it
-   * makes all objects which shares this data-block to be updated. */
+   * makes all objects which shares this data-block to be updated.
+   * When a collection gets tagged with this flag, all objects depending on the geometry and
+   * transforms on any of the objects in the collection are updated. */
   ID_RECALC_GEOMETRY = (1 << 1),
 
   /* ** Animation or time changed and animation is to be re-evaluated. ** */
