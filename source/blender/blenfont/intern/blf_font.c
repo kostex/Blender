@@ -317,7 +317,8 @@ static GlyphBLF **blf_font_ensure_ascii_table(FontBLF *font, GlyphCacheBLF *gc)
   /* build ascii on demand */
   if (glyph_ascii_table['0'] == NULL) {
     GlyphBLF *g;
-    for (uint i = 0; i < 256; i++) {
+    /* Skip control characters and just cache rendered glyphs for visible ASCII range. */
+    for (uint i = 32; i < 128; i++) {
       g = blf_glyph_search(gc, i);
       if (!g) {
         FT_UInt glyph_index = FT_Get_Char_Index(font->face, i);
@@ -1359,9 +1360,15 @@ FontBLF *blf_font_new(const char *name, const char *filename)
     return NULL;
   }
 
-  err = FT_Select_Charmap(font->face, ft_encoding_unicode);
+  err = FT_Select_Charmap(font->face, FT_ENCODING_UNICODE);
   if (err) {
-    printf("Can't set the unicode character map!\n");
+    err = FT_Select_Charmap(font->face, FT_ENCODING_APPLE_ROMAN);
+  }
+  if (err && font->face->num_charmaps > 0) {
+    err = FT_Select_Charmap(font->face, font->face->charmaps[0]->encoding);
+  }
+  if (err) {
+    printf("Can't set a character map!\n");
     FT_Done_Face(font->face);
     MEM_freeN(font);
     return NULL;

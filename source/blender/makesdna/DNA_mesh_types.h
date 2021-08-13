@@ -231,6 +231,7 @@ typedef struct Mesh {
    * default and Face Sets can be used without affecting the color of the mesh. */
   int face_sets_color_default;
 
+  void *_pad2;
   Mesh_Runtime runtime;
 } Mesh;
 
@@ -281,9 +282,9 @@ enum {
 /* We can't have both flags enabled at once,
  * flags defined in DNA_scene_types.h */
 #define ME_EDIT_PAINT_SEL_MODE(_me) \
-  (((_me)->editflag & ME_EDIT_PAINT_FACE_SEL) ? \
-       SCE_SELECT_FACE : \
-       ((_me)->editflag & ME_EDIT_PAINT_VERT_SEL) ? SCE_SELECT_VERTEX : 0)
+  (((_me)->editflag & ME_EDIT_PAINT_FACE_SEL) ? SCE_SELECT_FACE : \
+   ((_me)->editflag & ME_EDIT_PAINT_VERT_SEL) ? SCE_SELECT_VERTEX : \
+                                                0)
 
 /* me->flag */
 enum {
