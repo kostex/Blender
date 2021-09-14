@@ -31,6 +31,7 @@
 
 #include "NOD_geometry.h"
 #include "NOD_geometry_exec.hh"
+#include "NOD_socket_declarations.hh"
 
 #include "node_util.h"
 
@@ -83,7 +84,7 @@ struct CurveToPointsResults {
   MutableSpan<float> radii;
   MutableSpan<float> tilts;
 
-  Map<std::string, GMutableSpan> point_attributes;
+  Map<AttributeIDRef, GMutableSpan> point_attributes;
 
   MutableSpan<float3> tangents;
   MutableSpan<float3> normals;
